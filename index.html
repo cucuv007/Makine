@@ -39,8 +39,12 @@
                     <input type="text" id="searchAriza" placeholder="Arıza ara...">
                 </div>
                 <div class="search-field">
-                    <label>Arıza Durumu</label>
-                    <input type="text" id="searchDurum" placeholder="Durum ara...">
+                    <label>Başlangıç Tarihi</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="search-field">
+                    <label>Bitiş Tarihi</label>
+                    <input type="date" id="endDate">
                 </div>
             </div>
             <div class="search-buttons">
@@ -59,9 +63,38 @@
             <div class="data-header">
                 <h2>Araç Listesi</h2>
                 <div class="data-info">
-                    Toplam: <strong id="totalCount">0</strong> kayıt
+                    Gösterilen: <strong id="displayedCount">0</strong> / Toplam: <strong id="totalCount">0</strong> kayıt
                 </div>
             </div>
+
+            <!-- Limit Butonları -->
+            <div class="limit-section">
+                <button class="limit-btn active" id="btn-50" onclick="setLimit(50); setStatusFilter('all');">
+                    <i class="fas fa-list"></i>
+                    <span>50</span>
+                </button>
+                <button class="limit-btn" id="btn-100" onclick="setLimit(100); setStatusFilter('all');">
+                    <i class="fas fa-list-ul"></i>
+                    <span>100</span>
+                </button>
+                <button class="limit-btn" id="btn-1000" onclick="setLimit(1000); setStatusFilter('all');">
+                    <i class="fas fa-th-list"></i>
+                    <span>1000</span>
+                </button>
+                <button class="limit-btn" id="btn-all" onclick="setLimit('all'); setStatusFilter('all');">
+                    <i class="fas fa-infinity"></i>
+                    <span>ALL</span>
+                </button>
+                <button class="limit-btn status-breakdown-btn" id="btn-arizali" onclick="setLimit('all'); setStatusFilter('arizali');">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>ARIZALI</span>
+                </button>
+                <button class="limit-btn status-active-btn" id="btn-yapilanlar" onclick="setLimit('all'); setStatusFilter('yapilanlar');">
+                    <i class="fas fa-check-circle"></i>
+                    <span>YAPILANLAR</span>
+                </button>
+            </div>
+
             <div class="table-container">
                 <table id="dataTable">
                     <thead>
