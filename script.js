@@ -15,7 +15,7 @@ async function fetchDataFromSupabase() {
     try {
         console.log('Supabase baglantisi baslatiliyor...');
 
-        const response = await fetch(SUPABASE_URL + '/rest/v1/md_data?select=*&order=id.desc', {
+        const response = await fetch(SUPABASE_URL + '/rest/v1/md_data?select=*&order=Giriş_Tarihi.desc', {
             method: 'GET',
             headers: {
                 'apikey': SUPABASE_KEY,
@@ -35,7 +35,6 @@ async function fetchDataFromSupabase() {
 
         const data = await response.json();
         console.log('Gelen veri:', data);
-        console.log('Ornek veri:', data[0]);
 
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
@@ -79,7 +78,6 @@ function getStatusClass(arizaDurumu) {
     if (!arizaDurumu) return 'status-breakdown';
 
     const durum = arizaDurumu.toLowerCase().trim();
-    console.log('Durum kontrol:', durum);
 
     // Yapıldı = Yeşil
     if (durum === 'yapildi' || durum === 'yapıldı' || durum === 'yapilmis' || durum === 'yapılmış') {
@@ -139,7 +137,7 @@ function applyFilters() {
             }
         }
 
-        // Durum filtresi
+        // Durum filtresi - BAĞIMSIZ
         let statusMatch = true;
         if (currentStatusFilter === 'arizali') {
             const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
@@ -169,12 +167,12 @@ function renderTable(data) {
         return;
     }
 
-    // Limit uygula
+    // Limit uygula - HER BUTON BAĞIMSIZ
     const limitedData = currentLimit === 'all' ? data : data.slice(0, currentLimit);
 
     tbody.innerHTML = limitedData.map(function(item) {
         const statusClass = getStatusClass(item.Arıza_Durumu);
-        return '<tr>' +
+        return '<tr ondblclick="showPlateDetails('' + (item.Plaka || '') + '')">' +
             '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
             '<td>' + (item.Plaka || '-') + '</td>' +
             '<td>' + formatDate(item.Giriş_Tarihi) + '</td>' +
@@ -192,6 +190,100 @@ function renderTable(data) {
     displayedCount.textContent = limitedData.length;
 }
 
+// Plaka detaylarını göster - POPUP
+function showPlateDetails(plaka) {
+    if (!plaka || plaka === '-') return;
+
+    console.log('Plaka detaylari aciliyor:', plaka);
+
+    // Plakaya ait tüm kayıtları bul (Giriş_Tarihi'ne göre sıralı)
+    const plateRecords = busData.filter(function(item) {
+        return item.Plaka === plaka;
+    }).sort(function(a, b) {
+        const dateA = new Date(a.Giriş_Tarihi || '1900-01-01');
+        const dateB = new Date(b.Giriş_Tarihi || '1900-01-01');
+        return dateB - dateA; // Yeniden eskiye
+    });
+
+    if (plateRecords.length === 0) return;
+
+    const latestRecord = plateRecords[0]; // En güncel kayıt
+
+    // 1. Kaç Gündür Arızalı
+    let daysInRepair = 'Araç Arızalı Değil';
+    if (latestRecord.Giriş_Tarihi && !latestRecord.Çıkış_Tarihi) {
+        const entryDate = new Date(latestRecord.Giriş_Tarihi);
+        const today = new Date();
+        const diffTime = Math.abs(today - entryDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        daysInRepair = diffDays + ' Gün';
+    }
+
+    // 2. En Son Ne Zaman Bakıma Girdi
+    const lastEntry = latestRecord.Giriş_Tarihi ? formatDate(latestRecord.Giriş_Tarihi) : '-';
+
+    // 3. En Son Çıkış Tarihi
+    const lastExit = latestRecord.Çıkış_Tarihi ? formatDate(latestRecord.Çıkış_Tarihi) : '-';
+
+    // 4. En Son Arızası
+    const lastFault = latestRecord.Arıza || '-';
+
+    // 5. Kaç Kere Bakıma Geldi
+    const repairCount = plateRecords.length;
+
+    // 6. Toplam Bakımda Bekleme Süresi
+    let totalDays = 0;
+    plateRecords.forEach(function(record) {
+        if (record.Giriş_Tarihi && record.Çıkış_Tarihi) {
+            const entry = new Date(record.Giriş_Tarihi);
+            const exit = new Date(record.Çıkış_Tarihi);
+            const diff = Math.abs(exit - entry);
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            totalDays += days;
+        }
+    });
+
+    // Popup içeriği
+    const popupContent = '<div class="popup-header">' +
+        '<h2>' + plaka + '</h2>' +
+        '<button class="popup-close" onclick="closePopup()"><i class="fas fa-times"></i></button>' +
+    '</div>' +
+    '<div class="popup-body">' +
+        '<div class="popup-item">' +
+            '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
+            '<span class="popup-value">' + daysInRepair + '</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
+            '<span class="popup-value">' + lastEntry + '</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
+            '<span class="popup-value">' + lastExit + '</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">En Son Arızası:</span>' +
+            '<span class="popup-value">' + lastFault + '</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
+            '<span class="popup-value">' + repairCount + ' Kez</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
+            '<span class="popup-value">' + totalDays + ' Gün</span>' +
+        '</div>' +
+    '</div>';
+
+    document.getElementById('popupContent').innerHTML = popupContent;
+    document.getElementById('platePopup').style.display = 'flex';
+}
+
+// Popup kapat
+function closePopup() {
+    document.getElementById('platePopup').style.display = 'none';
+}
+
 // Filtreleri temizleme
 function clearFilters() {
     document.getElementById('searchSeriNo').value = '';
@@ -205,18 +297,18 @@ function clearFilters() {
     applyFilters();
 }
 
-// Limit degistirme
+// Limit degistirme - BAĞIMSIZ
 function setLimit(limit) {
     currentLimit = limit;
-    currentStatusFilter = 'all';
+    currentStatusFilter = 'all'; // Durum filtresini sıfırla
     updateLimitButtons();
     renderTable(filteredData);
 }
 
-// Durum filtresi
+// Durum filtresi - BAĞIMSIZ
 function setStatusFilter(status) {
     currentStatusFilter = status;
-    currentLimit = 'all';
+    currentLimit = 'all'; // Limit'i sıfırla, tüm kayıtları göster
     updateLimitButtons();
     applyFilters();
 }
@@ -312,4 +404,11 @@ window.addEventListener('DOMContentLoaded', function() {
 
     // Limit butonlarini guncelle
     updateLimitButtons();
+
+    // Popup dışına tıklanınca kapat
+    document.getElementById('platePopup').addEventListener('click', function(e) {
+        if (e.target.id === 'platePopup') {
+            closePopup();
+        }
+    });
 });
