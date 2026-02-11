@@ -8,12 +8,12 @@ let filteredData = [];
 // Supabase'den veri cekme fonksiyonu
 async function fetchDataFromSupabase() {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yukleniyor...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yukleniyor...</td></tr>';
 
     try {
         console.log('Supabase baglantisi baslatiliyor...');
 
-        const response = await fetch(SUPABASE_URL + '/rest/v1/md_data?select=*', {
+        const response = await fetch(SUPABASE_URL + '/rest/v1/md_data?select=*&order=id.desc', {
             method: 'GET',
             headers: {
                 'apikey': SUPABASE_KEY,
@@ -35,80 +35,55 @@ async function fetchDataFromSupabase() {
         console.log('Gelen veri:', data);
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
             document.getElementById('totalCount').textContent = '0';
             return;
         }
 
-        // Supabase verisini uygun formata donustur
-        busData = data.map(function(item) {
-            return {
-                id: item.id,
-                seriNo: item.Seri_No || '-',
-                plate: item.Plaka || '-',
-                route: item.Seri_No || '-',
-                type: '12M',
-                status: getStatus(item.Arıza_Durumu),
-                issue: item.Arıza || '-',
-                priority: getPriority(item.Arıza_Durumu),
-                location: '-',
-                datetime: formatDateTime(item.Giriş_Tarihi, item.Giriş_Saati),
-                exitDate: formatDateTime(item.Çıkış_Tarihi, item.Çıkış_Saati),
-                openedBy: item.Formu_Açan || '-',
-                closedBy: item.Arızayı_Kapatan || '-',
-                image: item.Resim || null,
-                rawStatus: item.Arıza_Durumu
-            };
-        });
-
+        // Supabase verisini direkt kullan
+        busData = data;
         filteredData = busData.slice();
         renderTable(filteredData);
 
         console.log('Toplam kayit yuklendi:', busData.length);
     } catch (error) {
         console.error('Supabase baglanti hatasi:', error);
-        tbody.innerHTML = '<tr><td colspan="8" class="no-data" style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i><br><strong>Hata:</strong> ' + error.message + '<br><small>Konsolu kontrol edin (F12)</small></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="no-data" style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i><br><strong>Hata:</strong> ' + error.message + '<br><small>Konsolu kontrol edin (F12)</small></td></tr>';
     }
 }
 
-// Ariza durumuna gore status belirleme
-function getStatus(arizaDurumu) {
-    if (!arizaDurumu) return 'breakdown';
+// Tarih formatlama
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('tr-TR');
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+// Saat formatlama
+function formatTime(timeStr) {
+    if (!timeStr) return '-';
+    try {
+        return timeStr.substring(0, 5);
+    } catch (e) {
+        return timeStr;
+    }
+}
+
+// Ariza durumuna gore badge class
+function getStatusClass(arizaDurumu) {
+    if (!arizaDurumu) return 'status-breakdown';
 
     const durum = arizaDurumu.toLowerCase().trim();
 
-    if (durum === 'acik' || durum === 'açık' || durum.includes('devam')) return 'breakdown';
-    if (durum === 'kapali' || durum === 'kapalı' || durum.includes('tamamlan')) return 'active';
-    if (durum.includes('bakim') || durum.includes('bakım')) return 'maintenance';
+    if (durum === 'acik' || durum === 'açık') return 'status-breakdown';
+    if (durum === 'kapali' || durum === 'kapalı') return 'status-active';
+    if (durum.includes('bakim') || durum.includes('bakım')) return 'status-maintenance';
 
-    return 'breakdown';
-}
-
-// Oncelik belirleme
-function getPriority(arizaDurumu) {
-    if (!arizaDurumu) return 'medium';
-
-    const durum = arizaDurumu.toLowerCase();
-    if (durum.includes('acil') || durum.includes('kritik') || durum === 'acik' || durum === 'açık') return 'high';
-    if (durum.includes('orta')) return 'medium';
-    if (durum === 'kapali' || durum === 'kapalı') return 'low';
-
-    return 'medium';
-}
-
-// Tarih ve saat formatlama
-function formatDateTime(date, time) {
-    if (!date) return '-';
-
-    try {
-        const dateObj = new Date(date);
-        const dateStr = dateObj.toLocaleDateString('tr-TR');
-        const timeStr = time ? time.substring(0, 5) : '';
-
-        return timeStr ? dateStr + ' ' + timeStr : dateStr;
-    } catch (e) {
-        return '-';
-    }
+    return 'status-breakdown';
 }
 
 // Tablo render fonksiyonu
@@ -117,50 +92,43 @@ function renderTable(data) {
     const totalCount = document.getElementById('totalCount');
 
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
         totalCount.textContent = '0';
         return;
     }
 
-    tbody.innerHTML = data.map(function(bus) {
-        return '<tr><td><strong>' + bus.plate + '</strong></td><td>' + bus.seriNo + '</td><td>' + bus.type + '</td><td><span class="status-badge status-' + bus.status + '">' + getStatusText(bus.status) + '</span></td><td>' + bus.issue + '</td><td class="priority-' + bus.priority + '">' + getPriorityText(bus.priority) + '</td><td>' + bus.openedBy + '</td><td>' + bus.datetime + '</td></tr>';
+    tbody.innerHTML = data.map(function(item) {
+        return '<tr>' +
+            '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
+            '<td>' + (item.Plaka || '-') + '</td>' +
+            '<td>' + formatDate(item.Giriş_Tarihi) + '</td>' +
+            '<td>' + formatTime(item.Giriş_Saati) + '</td>' +
+            '<td>' + (item.Arıza || '-') + '</td>' +
+            '<td>' + (item.Formu_Açan || '-') + '</td>' +
+            '<td>' + (item.Arızayı_Kapatan || '-') + '</td>' +
+            '<td>' + formatDate(item.Çıkış_Tarihi) + '</td>' +
+            '<td>' + formatTime(item.Çıkış_Saati) + '</td>' +
+            '<td><span class="status-badge ' + getStatusClass(item.Arıza_Durumu) + '">' + (item.Arıza_Durumu || '-') + '</span></td>' +
+        '</tr>';
     }).join('');
 
     totalCount.textContent = data.length;
 }
 
-function getStatusText(status) {
-    const statusMap = {
-        'active': 'Aktif',
-        'breakdown': 'Arizali',
-        'maintenance': 'Bakimda'
-    };
-    return statusMap[status] || status;
-}
-
-function getPriorityText(priority) {
-    const priorityMap = {
-        'high': 'Yuksek',
-        'medium': 'Orta',
-        'low': 'Dusuk'
-    };
-    return priorityMap[priority] || priority;
-}
-
 // Filtreleme fonksiyonu
 function filterData() {
-    const plate = document.getElementById('searchPlate').value.toLowerCase();
-    const route = document.getElementById('searchRoute').value.toLowerCase();
-    const status = document.getElementById('searchStatus').value;
-    const priority = document.getElementById('searchPriority').value;
+    const seriNo = document.getElementById('searchSeriNo').value.toLowerCase();
+    const plaka = document.getElementById('searchPlaka').value.toLowerCase();
+    const ariza = document.getElementById('searchAriza').value.toLowerCase();
+    const durum = document.getElementById('searchDurum').value.toLowerCase();
 
-    filteredData = busData.filter(function(bus) {
-        return (
-            (plate === '' || bus.plate.toLowerCase().includes(plate)) &&
-            (route === '' || bus.seriNo.toString().toLowerCase().includes(route)) &&
-            (status === '' || bus.status === status) &&
-            (priority === '' || bus.priority === priority)
-        );
+    filteredData = busData.filter(function(item) {
+        const seriNoMatch = seriNo === '' || (item.Seri_No && item.Seri_No.toString().toLowerCase().includes(seriNo));
+        const plakaMatch = plaka === '' || (item.Plaka && item.Plaka.toLowerCase().includes(plaka));
+        const arizaMatch = ariza === '' || (item.Arıza && item.Arıza.toLowerCase().includes(ariza));
+        const durumMatch = durum === '' || (item.Arıza_Durumu && item.Arıza_Durumu.toLowerCase().includes(durum));
+
+        return seriNoMatch && plakaMatch && arizaMatch && durumMatch;
     });
 
     renderTable(filteredData);
@@ -168,10 +136,10 @@ function filterData() {
 
 // Filtreleri temizleme
 function clearFilters() {
-    document.getElementById('searchPlate').value = '';
-    document.getElementById('searchRoute').value = '';
-    document.getElementById('searchStatus').value = '';
-    document.getElementById('searchPriority').value = '';
+    document.getElementById('searchSeriNo').value = '';
+    document.getElementById('searchPlaka').value = '';
+    document.getElementById('searchAriza').value = '';
+    document.getElementById('searchDurum').value = '';
     filteredData = busData.slice();
     renderTable(filteredData);
 }
@@ -218,8 +186,8 @@ window.addEventListener('DOMContentLoaded', function() {
     fetchDataFromSupabase();
 
     // Gercek zamanli arama
-    document.getElementById('searchPlate').addEventListener('input', filterData);
-    document.getElementById('searchRoute').addEventListener('input', filterData);
-    document.getElementById('searchStatus').addEventListener('change', filterData);
-    document.getElementById('searchPriority').addEventListener('change', filterData);
+    document.getElementById('searchSeriNo').addEventListener('input', filterData);
+    document.getElementById('searchPlaka').addEventListener('input', filterData);
+    document.getElementById('searchAriza').addEventListener('input', filterData);
+    document.getElementById('searchDurum').addEventListener('input', filterData);
 });
