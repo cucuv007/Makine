@@ -5,95 +5,93 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let busData = [];
 let filteredData = [];
 
-// Supabase'den veri çekme fonksiyonu
+// Supabase'den veri cekme fonksiyonu
 async function fetchDataFromSupabase() {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yükleniyor...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yukleniyor...</td></tr>';
 
     try {
-        console.log('🔄 Supabase'e bağlanılıyor...');
+        console.log('Supabase baglantisi baslatiliyor...');
 
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/md_data?select=*`, {
+        const response = await fetch(SUPABASE_URL + '/rest/v1/md_data?select=*', {
             method: 'GET',
             headers: {
                 'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
                 'Content-Type': 'application/json',
                 'Prefer': 'return=representation'
             }
         });
 
-        console.log('📡 Response status:', response.status);
+        console.log('Response status:', response.status);
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('❌ API Hatası:', errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            console.error('API Hatasi:', errorText);
+            throw new Error('HTTP ' + response.status + ': ' + errorText);
         }
 
         const data = await response.json();
-        console.log('✅ Gelen veri:', data);
+        console.log('Gelen veri:', data);
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayıt bulunamadı</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
             document.getElementById('totalCount').textContent = '0';
             return;
         }
 
-        // Supabase verisini uygun formata dönüştür
-        busData = data.map(item => ({
-            id: item.id,
-            seriNo: item.Seri_No || '-',
-            plate: item.Plaka || '-',
-            route: item.Seri_No || '-',
-            type: '12M',
-            status: getStatus(item.Arıza_Durumu),
-            issue: item.Arıza || '-',
-            priority: getPriority(item.Arıza_Durumu),
-            location: '-',
-            datetime: formatDateTime(item.Giriş_Tarihi, item.Giriş_Saati),
-            exitDate: formatDateTime(item.Çıkış_Tarihi, item.Çıkış_Saati),
-            openedBy: item.Formu_Açan || '-',
-            closedBy: item.Arızayı_Kapatan || '-',
-            image: item.Resim || null,
-            rawStatus: item.Arıza_Durumu
-        }));
+        // Supabase verisini uygun formata donustur
+        busData = data.map(function(item) {
+            return {
+                id: item.id,
+                seriNo: item.Seri_No || '-',
+                plate: item.Plaka || '-',
+                route: item.Seri_No || '-',
+                type: '12M',
+                status: getStatus(item.Arıza_Durumu),
+                issue: item.Arıza || '-',
+                priority: getPriority(item.Arıza_Durumu),
+                location: '-',
+                datetime: formatDateTime(item.Giriş_Tarihi, item.Giriş_Saati),
+                exitDate: formatDateTime(item.Çıkış_Tarihi, item.Çıkış_Saati),
+                openedBy: item.Formu_Açan || '-',
+                closedBy: item.Arızayı_Kapatan || '-',
+                image: item.Resim || null,
+                rawStatus: item.Arıza_Durumu
+            };
+        });
 
-        filteredData = [...busData];
+        filteredData = busData.slice();
         renderTable(filteredData);
 
-        console.log('✅ Toplam', busData.length, 'kayıt yüklendi');
+        console.log('Toplam kayit yuklendi:', busData.length);
     } catch (error) {
-        console.error('❌ Supabase bağlantı hatası:', error);
-        tbody.innerHTML = `<tr><td colspan="8" class="no-data" style="color: var(--accent-red);">
-            <i class="fas fa-exclamation-triangle"></i><br>
-            <strong>Hata:</strong> ${error.message}<br>
-            <small>Konsolu kontrol edin (F12)</small>
-        </td></tr>`;
+        console.error('Supabase baglanti hatasi:', error);
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data" style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i><br><strong>Hata:</strong> ' + error.message + '<br><small>Konsolu kontrol edin (F12)</small></td></tr>';
     }
 }
 
-// Arıza durumuna göre status belirleme
+// Ariza durumuna gore status belirleme
 function getStatus(arizaDurumu) {
     if (!arizaDurumu) return 'breakdown';
 
     const durum = arizaDurumu.toLowerCase().trim();
 
-    if (durum === 'açık' || durum.includes('devam')) return 'breakdown';
-    if (durum === 'kapalı' || durum === 'kapali' || durum.includes('tamamlan')) return 'active';
-    if (durum.includes('bakım') || durum.includes('bakim')) return 'maintenance';
+    if (durum === 'acik' || durum === 'açık' || durum.includes('devam')) return 'breakdown';
+    if (durum === 'kapali' || durum === 'kapalı' || durum.includes('tamamlan')) return 'active';
+    if (durum.includes('bakim') || durum.includes('bakım')) return 'maintenance';
 
     return 'breakdown';
 }
 
-// Öncelik belirleme
+// Oncelik belirleme
 function getPriority(arizaDurumu) {
     if (!arizaDurumu) return 'medium';
 
     const durum = arizaDurumu.toLowerCase();
-    if (durum.includes('acil') || durum.includes('kritik') || durum === 'açık') return 'high';
+    if (durum.includes('acil') || durum.includes('kritik') || durum === 'acik' || durum === 'açık') return 'high';
     if (durum.includes('orta')) return 'medium';
-    if (durum === 'kapalı' || durum === 'kapali') return 'low';
+    if (durum === 'kapali' || durum === 'kapalı') return 'low';
 
     return 'medium';
 }
@@ -107,7 +105,7 @@ function formatDateTime(date, time) {
         const dateStr = dateObj.toLocaleDateString('tr-TR');
         const timeStr = time ? time.substring(0, 5) : '';
 
-        return timeStr ? `${dateStr} ${timeStr}` : dateStr;
+        return timeStr ? dateStr + ' ' + timeStr : dateStr;
     } catch (e) {
         return '-';
     }
@@ -119,27 +117,14 @@ function renderTable(data) {
     const totalCount = document.getElementById('totalCount');
 
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-inbox"></i><br>Kayıt bulunamadı</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
         totalCount.textContent = '0';
         return;
     }
 
-    tbody.innerHTML = data.map(bus => `
-        <tr>
-            <td><strong>${bus.plate}</strong></td>
-            <td>${bus.seriNo}</td>
-            <td>${bus.type}</td>
-            <td>
-                <span class="status-badge status-${bus.status}">
-                    ${getStatusText(bus.status)}
-                </span>
-            </td>
-            <td>${bus.issue}</td>
-            <td class="priority-${bus.priority}">${getPriorityText(bus.priority)}</td>
-            <td>${bus.openedBy}</td>
-            <td>${bus.datetime}</td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = data.map(function(bus) {
+        return '<tr><td><strong>' + bus.plate + '</strong></td><td>' + bus.seriNo + '</td><td>' + bus.type + '</td><td><span class="status-badge status-' + bus.status + '">' + getStatusText(bus.status) + '</span></td><td>' + bus.issue + '</td><td class="priority-' + bus.priority + '">' + getPriorityText(bus.priority) + '</td><td>' + bus.openedBy + '</td><td>' + bus.datetime + '</td></tr>';
+    }).join('');
 
     totalCount.textContent = data.length;
 }
@@ -147,17 +132,17 @@ function renderTable(data) {
 function getStatusText(status) {
     const statusMap = {
         'active': 'Aktif',
-        'breakdown': 'Arızalı',
-        'maintenance': 'Bakımda'
+        'breakdown': 'Arizali',
+        'maintenance': 'Bakimda'
     };
     return statusMap[status] || status;
 }
 
 function getPriorityText(priority) {
     const priorityMap = {
-        'high': 'Yüksek',
+        'high': 'Yuksek',
         'medium': 'Orta',
-        'low': 'Düşük'
+        'low': 'Dusuk'
     };
     return priorityMap[priority] || priority;
 }
@@ -169,7 +154,7 @@ function filterData() {
     const status = document.getElementById('searchStatus').value;
     const priority = document.getElementById('searchPriority').value;
 
-    filteredData = busData.filter(bus => {
+    filteredData = busData.filter(function(bus) {
         return (
             (plate === '' || bus.plate.toLowerCase().includes(plate)) &&
             (route === '' || bus.seriNo.toString().toLowerCase().includes(route)) &&
@@ -187,11 +172,11 @@ function clearFilters() {
     document.getElementById('searchRoute').value = '';
     document.getElementById('searchStatus').value = '';
     document.getElementById('searchPriority').value = '';
-    filteredData = [...busData];
+    filteredData = busData.slice();
     renderTable(filteredData);
 }
 
-// Tema değiştirme
+// Tema degistirme
 function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
@@ -204,20 +189,20 @@ function toggleTheme() {
 
     if (newTheme === 'dark') {
         icon.className = 'fas fa-sun';
-        text.textContent = 'Aydınlık Mod';
+        text.textContent = 'Aydinlik Mod';
     } else {
         icon.className = 'fas fa-moon';
-        text.textContent = 'Karanlık Mod';
+        text.textContent = 'Karanlik Mod';
     }
 
     localStorage.setItem('theme', newTheme);
 }
 
-// Sayfa yüklendiğinde
-window.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Sayfa yüklendi');
+// Sayfa yuklendiginde
+window.addEventListener('DOMContentLoaded', function() {
+    console.log('Sayfa yuklendi');
 
-    // Tema yükle
+    // Tema yukle
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -226,13 +211,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (savedTheme === 'dark') {
         icon.className = 'fas fa-sun';
-        text.textContent = 'Aydınlık Mod';
+        text.textContent = 'Aydinlik Mod';
     }
 
-    // Supabase'den veri çek
+    // Supabase'den veri cek
     fetchDataFromSupabase();
 
-    // Gerçek zamanlı arama
+    // Gercek zamanli arama
     document.getElementById('searchPlate').addEventListener('input', filterData);
     document.getElementById('searchRoute').addEventListener('input', filterData);
     document.getElementById('searchStatus').addEventListener('change', filterData);
