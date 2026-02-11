@@ -4,6 +4,8 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 let busData = [];
 let filteredData = [];
+let currentLimit = 50;
+let currentStatusFilter = 'all';
 
 // Supabase'den veri cekme fonksiyonu
 async function fetchDataFromSupabase() {
@@ -33,6 +35,7 @@ async function fetchDataFromSupabase() {
 
         const data = await response.json();
         console.log('Gelen veri:', data);
+        console.log('Ornek veri:', data[0]);
 
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
@@ -40,10 +43,8 @@ async function fetchDataFromSupabase() {
             return;
         }
 
-        // Supabase verisini direkt kullan
         busData = data;
-        filteredData = busData.slice();
-        renderTable(filteredData);
+        applyFilters();
 
         console.log('Toplam kayit yuklendi:', busData.length);
     } catch (error) {
@@ -73,31 +74,106 @@ function formatTime(timeStr) {
     }
 }
 
-// Ariza durumuna gore badge class
+// Ariza durumuna gore badge class - SADECE YEŞİL VE KIRMIZI
 function getStatusClass(arizaDurumu) {
     if (!arizaDurumu) return 'status-breakdown';
 
     const durum = arizaDurumu.toLowerCase().trim();
+    console.log('Durum kontrol:', durum);
 
-    if (durum === 'acik' || durum === 'açık') return 'status-breakdown';
-    if (durum === 'kapali' || durum === 'kapalı') return 'status-active';
-    if (durum.includes('bakim') || durum.includes('bakım')) return 'status-maintenance';
+    // Yapıldı = Yeşil
+    if (durum === 'yapildi' || durum === 'yapıldı' || durum === 'yapilmis' || durum === 'yapılmış') {
+        return 'status-active';
+    }
 
+    // Arızalı = Kırmızı (default)
     return 'status-breakdown';
+}
+
+// Tüm filtreleri uygula
+function applyFilters() {
+    const seriNo = document.getElementById('searchSeriNo').value.trim();
+    const plaka = document.getElementById('searchPlaka').value.trim();
+    const ariza = document.getElementById('searchAriza').value.trim();
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    console.log('Filtreler:', {seriNo: seriNo, plaka: plaka, ariza: ariza, startDate: startDate, endDate: endDate, statusFilter: currentStatusFilter});
+
+    filteredData = busData.filter(function(item) {
+        // Seri No filtresi - En az 3 karakter
+        let seriNoMatch = true;
+        if (seriNo.length >= 3) {
+            seriNoMatch = item.Seri_No && item.Seri_No.toString().toLowerCase().includes(seriNo.toLowerCase());
+        }
+
+        // Plaka filtresi - En az 3 karakter
+        let plakaMatch = true;
+        if (plaka.length >= 3) {
+            plakaMatch = item.Plaka && item.Plaka.toLowerCase().includes(plaka.toLowerCase());
+        }
+
+        // Ariza filtresi - En az 3 karakter
+        let arizaMatch = true;
+        if (ariza.length >= 3) {
+            arizaMatch = item.Arıza && item.Arıza.toLowerCase().includes(ariza.toLowerCase());
+        }
+
+        // Tarih filtresi
+        let dateMatch = true;
+        if (startDate || endDate) {
+            if (item.Giriş_Tarihi) {
+                const itemDate = new Date(item.Giriş_Tarihi);
+                if (startDate) {
+                    const start = new Date(startDate);
+                    start.setHours(0, 0, 0, 0);
+                    if (itemDate < start) dateMatch = false;
+                }
+                if (endDate) {
+                    const end = new Date(endDate);
+                    end.setHours(23, 59, 59, 999);
+                    if (itemDate > end) dateMatch = false;
+                }
+            } else {
+                dateMatch = false;
+            }
+        }
+
+        // Durum filtresi
+        let statusMatch = true;
+        if (currentStatusFilter === 'arizali') {
+            const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
+            statusMatch = durum !== 'yapildi' && durum !== 'yapıldı' && durum !== 'yapilmis' && durum !== 'yapılmış';
+        } else if (currentStatusFilter === 'yapilanlar') {
+            const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
+            statusMatch = durum === 'yapildi' || durum === 'yapıldı' || durum === 'yapilmis' || durum === 'yapılmış';
+        }
+
+        return seriNoMatch && plakaMatch && arizaMatch && dateMatch && statusMatch;
+    });
+
+    console.log('Filtrelenmis veri sayisi:', filteredData.length);
+    renderTable(filteredData);
 }
 
 // Tablo render fonksiyonu
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
     const totalCount = document.getElementById('totalCount');
+    const displayedCount = document.getElementById('displayedCount');
 
     if (data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
         totalCount.textContent = '0';
+        displayedCount.textContent = '0';
         return;
     }
 
-    tbody.innerHTML = data.map(function(item) {
+    // Limit uygula
+    const limitedData = currentLimit === 'all' ? data : data.slice(0, currentLimit);
+
+    tbody.innerHTML = limitedData.map(function(item) {
+        const statusClass = getStatusClass(item.Arıza_Durumu);
         return '<tr>' +
             '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
             '<td>' + (item.Plaka || '-') + '</td>' +
@@ -108,30 +184,12 @@ function renderTable(data) {
             '<td>' + (item.Arızayı_Kapatan || '-') + '</td>' +
             '<td>' + formatDate(item.Çıkış_Tarihi) + '</td>' +
             '<td>' + formatTime(item.Çıkış_Saati) + '</td>' +
-            '<td><span class="status-badge ' + getStatusClass(item.Arıza_Durumu) + '">' + (item.Arıza_Durumu || '-') + '</span></td>' +
+            '<td><span class="status-badge ' + statusClass + '">' + (item.Arıza_Durumu || '-') + '</span></td>' +
         '</tr>';
     }).join('');
 
     totalCount.textContent = data.length;
-}
-
-// Filtreleme fonksiyonu
-function filterData() {
-    const seriNo = document.getElementById('searchSeriNo').value.toLowerCase();
-    const plaka = document.getElementById('searchPlaka').value.toLowerCase();
-    const ariza = document.getElementById('searchAriza').value.toLowerCase();
-    const durum = document.getElementById('searchDurum').value.toLowerCase();
-
-    filteredData = busData.filter(function(item) {
-        const seriNoMatch = seriNo === '' || (item.Seri_No && item.Seri_No.toString().toLowerCase().includes(seriNo));
-        const plakaMatch = plaka === '' || (item.Plaka && item.Plaka.toLowerCase().includes(plaka));
-        const arizaMatch = ariza === '' || (item.Arıza && item.Arıza.toLowerCase().includes(ariza));
-        const durumMatch = durum === '' || (item.Arıza_Durumu && item.Arıza_Durumu.toLowerCase().includes(durum));
-
-        return seriNoMatch && plakaMatch && arizaMatch && durumMatch;
-    });
-
-    renderTable(filteredData);
+    displayedCount.textContent = limitedData.length;
 }
 
 // Filtreleri temizleme
@@ -139,9 +197,53 @@ function clearFilters() {
     document.getElementById('searchSeriNo').value = '';
     document.getElementById('searchPlaka').value = '';
     document.getElementById('searchAriza').value = '';
-    document.getElementById('searchDurum').value = '';
-    filteredData = busData.slice();
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    currentStatusFilter = 'all';
+    currentLimit = 50;
+    updateLimitButtons();
+    applyFilters();
+}
+
+// Limit degistirme
+function setLimit(limit) {
+    currentLimit = limit;
+    currentStatusFilter = 'all';
+    updateLimitButtons();
     renderTable(filteredData);
+}
+
+// Durum filtresi
+function setStatusFilter(status) {
+    currentStatusFilter = status;
+    currentLimit = 'all';
+    updateLimitButtons();
+    applyFilters();
+}
+
+// Limit butonlarini guncelle
+function updateLimitButtons() {
+    // Tum butonlari pasif yap
+    document.querySelectorAll('.limit-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+    });
+
+    // Aktif butonu isle
+    if (currentStatusFilter === 'arizali') {
+        document.getElementById('btn-arizali').classList.add('active');
+    } else if (currentStatusFilter === 'yapilanlar') {
+        document.getElementById('btn-yapilanlar').classList.add('active');
+    } else {
+        if (currentLimit === 50) {
+            document.getElementById('btn-50').classList.add('active');
+        } else if (currentLimit === 100) {
+            document.getElementById('btn-100').classList.add('active');
+        } else if (currentLimit === 1000) {
+            document.getElementById('btn-1000').classList.add('active');
+        } else if (currentLimit === 'all') {
+            document.getElementById('btn-all').classList.add('active');
+        }
+    }
 }
 
 // Tema degistirme
@@ -185,9 +287,29 @@ window.addEventListener('DOMContentLoaded', function() {
     // Supabase'den veri cek
     fetchDataFromSupabase();
 
-    // Gercek zamanli arama
-    document.getElementById('searchSeriNo').addEventListener('input', filterData);
-    document.getElementById('searchPlaka').addEventListener('input', filterData);
-    document.getElementById('searchAriza').addEventListener('input', filterData);
-    document.getElementById('searchDurum').addEventListener('input', filterData);
+    // Gercek zamanli arama - En az 3 karakter
+    document.getElementById('searchSeriNo').addEventListener('input', function() {
+        if (this.value.length === 0 || this.value.length >= 3) {
+            applyFilters();
+        }
+    });
+
+    document.getElementById('searchPlaka').addEventListener('input', function() {
+        if (this.value.length === 0 || this.value.length >= 3) {
+            applyFilters();
+        }
+    });
+
+    document.getElementById('searchAriza').addEventListener('input', function() {
+        if (this.value.length === 0 || this.value.length >= 3) {
+            applyFilters();
+        }
+    });
+
+    // Tarih degisikliklerinde filtrele
+    document.getElementById('startDate').addEventListener('change', applyFilters);
+    document.getElementById('endDate').addEventListener('change', applyFilters);
+
+    // Limit butonlarini guncelle
+    updateLimitButtons();
 });
