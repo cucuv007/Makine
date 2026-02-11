@@ -1,133 +1,146 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Otobüs Arıza Durumu</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <div class="logo">
-                    <i class="fas fa-bus"></i>
-                </div>
-                <div class="header-title">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <i class="fas fa-bus-alt"></i>
                     <h1>Otobüs Arıza Durumu</h1>
                 </div>
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Tema Değiştir">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                    <span id="theme-text">Karanlık Mod</span>
+                </button>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()">
-                <i class="fas fa-moon" id="theme-icon"></i>
-                <span id="theme-text">Karanlık Mod</span>
-            </button>
-        </div>
+        </header>
 
+        <!-- Search Section -->
         <div class="search-section">
             <div class="search-grid">
                 <div class="search-field">
-                    <label>Seri No (min 3 karakter)</label>
-                    <input type="text" id="searchSeriNo" placeholder="Seri No ara...">
+                    <label for="searchSeriNo">
+                        <i class="fas fa-barcode"></i> Seri No
+                    </label>
+                    <input type="text" id="searchSeriNo" placeholder="En az 3 karakter...">
                 </div>
                 <div class="search-field">
-                    <label>Plaka (min 3 karakter)</label>
-                    <input type="text" id="searchPlaka" placeholder="Plaka ara...">
+                    <label for="searchPlaka">
+                        <i class="fas fa-bus"></i> Plaka
+                    </label>
+                    <input type="text" id="searchPlaka" placeholder="En az 3 karakter...">
                 </div>
                 <div class="search-field">
-                    <label>Arıza (min 3 karakter)</label>
-                    <input type="text" id="searchAriza" placeholder="Arıza ara...">
+                    <label for="searchAriza">
+                        <i class="fas fa-exclamation-triangle"></i> Arıza
+                    </label>
+                    <input type="text" id="searchAriza" placeholder="En az 3 karakter...">
                 </div>
                 <div class="search-field">
-                    <label>Başlangıç Tarihi</label>
+                    <label for="startDate">
+                        <i class="fas fa-calendar-alt"></i> Başlangıç Tarihi
+                    </label>
                     <input type="date" id="startDate">
                 </div>
                 <div class="search-field">
-                    <label>Bitiş Tarihi</label>
+                    <label for="endDate">
+                        <i class="fas fa-calendar-check"></i> Bitiş Tarihi
+                    </label>
                     <input type="date" id="endDate">
                 </div>
             </div>
-            <div class="search-buttons">
-                <button class="btn btn-secondary" onclick="clearFilters()">
-                    <i class="fas fa-times"></i>
-                    Temizle
-                </button>
+            <div class="search-actions">
                 <button class="btn btn-primary" onclick="applyFilters()">
-                    <i class="fas fa-search"></i>
-                    Ara
+                    <i class="fas fa-search"></i> Ara
+                </button>
+                <button class="btn btn-secondary" onclick="clearFilters()">
+                    <i class="fas fa-times"></i> Temizle
                 </button>
             </div>
         </div>
 
-        <div class="data-section">
-            <div class="data-header">
-                <h2>Araç Listesi</h2>
-                <div class="data-info">
-                    Gösterilen: <strong id="displayedCount">0</strong> / Toplam: <strong id="totalCount">0</strong> kayıt
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <i class="fas fa-list"></i>
+                <div class="stat-info">
+                    <span class="stat-label">Toplam Kayıt</span>
+                    <span class="stat-value" id="totalCount">0</span>
                 </div>
             </div>
-
-            <!-- Limit Butonları - BAĞIMSIZ -->
-            <div class="limit-section">
-                <button class="limit-btn active" id="btn-50" onclick="setLimit(50)">
-                    <i class="fas fa-list"></i>
-                    <span>50</span>
-                </button>
-                <button class="limit-btn" id="btn-100" onclick="setLimit(100)">
-                    <i class="fas fa-list-ul"></i>
-                    <span>100</span>
-                </button>
-                <button class="limit-btn" id="btn-1000" onclick="setLimit(1000)">
-                    <i class="fas fa-th-list"></i>
-                    <span>1000</span>
-                </button>
-                <button class="limit-btn" id="btn-all" onclick="setLimit('all')">
-                    <i class="fas fa-infinity"></i>
-                    <span>ALL</span>
-                </button>
-                <button class="limit-btn status-breakdown-btn" id="btn-arizali" onclick="setStatusFilter('arizali')">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>ARIZALI</span>
-                </button>
-                <button class="limit-btn status-active-btn" id="btn-yapilanlar" onclick="setStatusFilter('yapilanlar')">
-                    <i class="fas fa-check-circle"></i>
-                    <span>YAPILANLAR</span>
-                </button>
+            <div class="stat-card">
+                <i class="fas fa-eye"></i>
+                <div class="stat-info">
+                    <span class="stat-label">Gösterilen</span>
+                    <span class="stat-value" id="displayedCount">0</span>
+                </div>
             </div>
+        </div>
 
-            <div class="table-container">
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>Seri No</th>
-                            <th>Plaka</th>
-                            <th>Giriş Tarihi</th>
-                            <th>Giriş Saati</th>
-                            <th>Arıza</th>
-                            <th>Formu Açan</th>
-                            <th>Arızayı Kapatan</th>
-                            <th>Çıkış Tarihi</th>
-                            <th>Çıkış Saati</th>
-                            <th>Arıza Durumu</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr>
-                            <td colspan="10" class="no-data">
-                                <i class="fas fa-spinner fa-spin"></i><br>
-                                Veriler yükleniyor...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <!-- Table -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-hashtag"></i> ID</th>
+                        <th><i class="fas fa-barcode"></i> Seri No</th>
+                        <th><i class="fas fa-bus"></i> Plaka</th>
+                        <th><i class="fas fa-calendar-alt"></i> Giriş Tarihi</th>
+                        <th><i class="fas fa-clock"></i> Giriş Saati</th>
+                        <th><i class="fas fa-exclamation-triangle"></i> Arıza</th>
+                        <th><i class="fas fa-user"></i> Formu Açan</th>
+                        <th><i class="fas fa-user-check"></i> Arızayı Kapatan</th>
+                        <th><i class="fas fa-calendar-check"></i> Çıkış Tarihi</th>
+                        <th><i class="fas fa-clock"></i> Çıkış Saati</th>
+                        <th><i class="fas fa-info-circle"></i> Arıza Durumu</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="11" class="no-data">
+                            <i class="fas fa-spinner fa-spin"></i><br>
+                            Veriler yükleniyor...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Limit Buttons -->
+        <div class="limit-buttons">
+            <button id="btn-50" class="limit-btn active" onclick="setLimit(50)">
+                <i class="fas fa-list-ol"></i> 50
+            </button>
+            <button id="btn-100" class="limit-btn" onclick="setLimit(100)">
+                <i class="fas fa-list-ol"></i> 100
+            </button>
+            <button id="btn-1000" class="limit-btn" onclick="setLimit(1000)">
+                <i class="fas fa-list-ol"></i> 1000
+            </button>
+            <button id="btn-all" class="limit-btn" onclick="setLimit('all')">
+                <i class="fas fa-infinity"></i> ALL
+            </button>
+            <button id="btn-arizali" class="limit-btn btn-arizali" onclick="setStatusFilter('arizali')">
+                <i class="fas fa-exclamation-circle"></i> ARIZALI
+            </button>
+            <button id="btn-yapilanlar" class="limit-btn btn-yapilanlar" onclick="setStatusFilter('yapilanlar')">
+                <i class="fas fa-check-circle"></i> YAPILANLAR
+            </button>
         </div>
     </div>
 
-    <!-- POPUP MODAL -->
+    <!-- Popup Modal -->
     <div id="platePopup" class="popup-overlay">
-        <div class="popup-container" id="popupContent">
-            <!-- Dinamik içerik buraya gelecek -->
+        <div class="popup-container">
+            <div id="popupContent"></div>
         </div>
     </div>
 
