@@ -172,7 +172,8 @@ function renderTable(data) {
 
     tbody.innerHTML = limitedData.map(function(item) {
         const statusClass = getStatusClass(item.Arıza_Durumu);
-        return '<tr ondblclick="showPlateDetails('' + (item.Plaka || '') + '')">' +
+        const plakaValue = item.Plaka || '';
+        return '<tr ondblclick="showPlateDetails(' + "'" + plakaValue + "'" + ')">' +
             '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
             '<td>' + (item.Plaka || '-') + '</td>' +
             '<td>' + formatDate(item.Giriş_Tarihi) + '</td>' +
