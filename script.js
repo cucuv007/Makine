@@ -192,7 +192,7 @@ function renderTable(data) {
     displayedCount.textContent = limitedData.length;
 }
 
-// ID'ye göre kayıt detaylarını göster - POPUP
+// ID'ye göre kayıt detaylarını göster - SADECE PLAKA İSTATİSTİKLERİ
 function showRecordDetails(recordId) {
     if (!recordId) return;
 
@@ -255,73 +255,35 @@ function showRecordDetails(recordId) {
         }
     });
 
-    // Popup içeriği - TIKLANAN KAYDIN BİLGİLERİ
+    // Popup içeriği - SADECE PLAKA İSTATİSTİKLERİ
     const popupContent = '<div class="popup-header">' +
-        '<h2>' + plaka + ' <small>(ID: ' + recordId + ')</small></h2>' +
+        '<h2>' + plaka + '</h2>' +
         '<button class="popup-close" onclick="closePopup()"><i class="fas fa-times"></i></button>' +
     '</div>' +
     '<div class="popup-body">' +
-        '<div class="popup-section">' +
-            '<h3>Tıklanan Kayıt Bilgileri</h3>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Giriş Tarihi:</span>' +
-                '<span class="popup-value">' + formatDate(record.Giriş_Tarihi) + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Giriş Saati:</span>' +
-                '<span class="popup-value">' + formatTime(record.Giriş_Saati) + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Arıza:</span>' +
-                '<span class="popup-value">' + (record.Arıza || '-') + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Formu Açan:</span>' +
-                '<span class="popup-value">' + (record.Formu_Açan || '-') + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Arızayı Kapatan:</span>' +
-                '<span class="popup-value">' + (record.Arızayı_Kapatan || '-') + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Çıkış Tarihi:</span>' +
-                '<span class="popup-value">' + formatDate(record.Çıkış_Tarihi) + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Çıkış Saati:</span>' +
-                '<span class="popup-value">' + formatTime(record.Çıkış_Saati) + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Arıza Durumu:</span>' +
-                '<span class="popup-value"><span class="status-badge ' + getStatusClass(record.Arıza_Durumu) + '">' + (record.Arıza_Durumu || '-') + '</span></span>' +
-            '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
+            '<span class="popup-value">' + daysInRepair + '</span>' +
         '</div>' +
-        '<div class="popup-section">' +
-            '<h3>Plaka Genel İstatistikleri</h3>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
-                '<span class="popup-value">' + daysInRepair + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
-                '<span class="popup-value">' + lastEntry + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
-                '<span class="popup-value">' + lastExit + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">En Son Arızası:</span>' +
-                '<span class="popup-value">' + lastFault + '</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
-                '<span class="popup-value">' + repairCount + ' Kez</span>' +
-            '</div>' +
-            '<div class="popup-item">' +
-                '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
-                '<span class="popup-value">' + totalDays + ' Gün</span>' +
-            '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
+            '<span class="popup-value">' + lastEntry + '</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
+            '<span class="popup-value">' + lastExit + '</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">En Son Arızası:</span>' +
+            '<span class="popup-value">' + lastFault + '</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
+            '<span class="popup-value">' + repairCount + ' Kez</span>' +
+        '</div>' +
+        '<div class="popup-item">' +
+            '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
+            '<span class="popup-value">' + totalDays + ' Gün</span>' +
         '</div>' +
     '</div>';
 
