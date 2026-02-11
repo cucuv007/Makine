@@ -154,7 +154,7 @@ function applyFilters() {
     renderTable(filteredData);
 }
 
-// Tablo render fonksiyonu - ID SÜTUNU EKLENDİ
+// Tablo render fonksiyonu - TEK TIKLAMA
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
     const totalCount = document.getElementById('totalCount');
@@ -173,7 +173,7 @@ function renderTable(data) {
     tbody.innerHTML = limitedData.map(function(item) {
         const statusClass = getStatusClass(item.Arıza_Durumu);
         const recordId = item.id || '';
-        return '<tr ondblclick="showRecordDetails(' + recordId + ')">' +
+        return '<tr onclick="showRecordDetails(' + recordId + ')" style="cursor: pointer;">' +
             '<td><strong>' + (item.id || '-') + '</strong></td>' +
             '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
             '<td>' + (item.Plaka || '-') + '</td>' +
