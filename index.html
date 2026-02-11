@@ -27,15 +27,15 @@
         <div class="search-section">
             <div class="search-grid">
                 <div class="search-field">
-                    <label>Seri No</label>
+                    <label>Seri No (min 3 karakter)</label>
                     <input type="text" id="searchSeriNo" placeholder="Seri No ara...">
                 </div>
                 <div class="search-field">
-                    <label>Plaka</label>
+                    <label>Plaka (min 3 karakter)</label>
                     <input type="text" id="searchPlaka" placeholder="Plaka ara...">
                 </div>
                 <div class="search-field">
-                    <label>Arıza</label>
+                    <label>Arıza (min 3 karakter)</label>
                     <input type="text" id="searchAriza" placeholder="Arıza ara...">
                 </div>
                 <div class="search-field">
@@ -52,7 +52,7 @@
                     <i class="fas fa-times"></i>
                     Temizle
                 </button>
-                <button class="btn btn-primary" onclick="filterData()">
+                <button class="btn btn-primary" onclick="applyFilters()">
                     <i class="fas fa-search"></i>
                     Ara
                 </button>
@@ -69,27 +69,27 @@
 
             <!-- Limit Butonları -->
             <div class="limit-section">
-                <button class="limit-btn active" id="btn-50" onclick="setLimit(50); setStatusFilter('all');">
+                <button class="limit-btn active" id="btn-50" onclick="setLimit(50)">
                     <i class="fas fa-list"></i>
                     <span>50</span>
                 </button>
-                <button class="limit-btn" id="btn-100" onclick="setLimit(100); setStatusFilter('all');">
+                <button class="limit-btn" id="btn-100" onclick="setLimit(100)">
                     <i class="fas fa-list-ul"></i>
                     <span>100</span>
                 </button>
-                <button class="limit-btn" id="btn-1000" onclick="setLimit(1000); setStatusFilter('all');">
+                <button class="limit-btn" id="btn-1000" onclick="setLimit(1000)">
                     <i class="fas fa-th-list"></i>
                     <span>1000</span>
                 </button>
-                <button class="limit-btn" id="btn-all" onclick="setLimit('all'); setStatusFilter('all');">
+                <button class="limit-btn" id="btn-all" onclick="setLimit('all')">
                     <i class="fas fa-infinity"></i>
                     <span>ALL</span>
                 </button>
-                <button class="limit-btn status-breakdown-btn" id="btn-arizali" onclick="setLimit('all'); setStatusFilter('arizali');">
+                <button class="limit-btn status-breakdown-btn" id="btn-arizali" onclick="setStatusFilter('arizali')">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span>ARIZALI</span>
                 </button>
-                <button class="limit-btn status-active-btn" id="btn-yapilanlar" onclick="setLimit('all'); setStatusFilter('yapilanlar');">
+                <button class="limit-btn status-active-btn" id="btn-yapilanlar" onclick="setStatusFilter('yapilanlar')">
                     <i class="fas fa-check-circle"></i>
                     <span>YAPILANLAR</span>
                 </button>
