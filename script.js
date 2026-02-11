@@ -7,6 +7,21 @@ let filteredData = [];
 let currentLimit = 50;
 let currentStatusFilter = 'all';
 
+// Login kontrolü - Sayfa yüklendiğinde
+function checkLogin() {
+    const loggedInUser = localStorage.getItem('loggedInUser');
+
+    if (!loggedInUser) {
+        // Login yapılmamışsa login.html'e yönlendir
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    // Kullanıcı adını göster
+    document.getElementById('loggedUsername').textContent = loggedInUser;
+    return true;
+}
+
 // Supabase'den veri cekme fonksiyonu
 async function fetchDataFromSupabase() {
     const tbody = document.getElementById('tableBody');
@@ -194,7 +209,6 @@ function renderTable(data) {
     // Gösterilen = Filtrelenmiş kayıtlar (limit uygulanmış)
     displayedCount.textContent = limitedData.length;
 }
-
 // ID'ye göre kayıt detaylarını göster - TOPLAM BAKIM SÜRESİ DÜZELTİLDİ
 function showRecordDetails(recordId) {
     if (!recordId) return;
@@ -380,9 +394,50 @@ function toggleTheme() {
     localStorage.setItem('theme', newTheme);
 }
 
+// Şifre değiştirme popup aç
+function openChangePasswordPopup() {
+    document.getElementById('changePasswordPopup').style.display = 'flex';
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    document.getElementById('passwordError').classList.remove('show');
+    document.getElementById('passwordSuccess').classList.remove('show');
+}
+
+// Şifre değiştirme popup kapat
+function closeChangePasswordPopup() {
+    document.getElementById('changePasswordPopup').style.display = 'none';
+}
+
+// Şifre değiştirme hata mesajı
+function showPasswordError(message) {
+    const errorDiv = document.getElementById('passwordError');
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+
+    setTimeout(function() {
+        errorDiv.classList.remove('show');
+    }, 4000);
+}
+
+// Şifre değiştirme başarı mesajı
+function showPasswordSuccess(message) {
+    const successDiv = document.getElementById('passwordSuccess');
+    successDiv.textContent = message;
+    successDiv.classList.add('show');
+
+    setTimeout(function() {
+        successDiv.classList.remove('show');
+    }, 4000);
+}
 // Sayfa yuklendiginde
 window.addEventListener('DOMContentLoaded', function() {
     console.log('Sayfa yuklendi');
+
+    // Login kontrolü
+    if (!checkLogin()) {
+        return;
+    }
 
     // Tema yukle
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -431,4 +486,125 @@ window.addEventListener('DOMContentLoaded', function() {
             closePopup();
         }
     });
+
+    // Şifre değiştirme popup dışına tıklanınca kapat
+    document.getElementById('changePasswordPopup').addEventListener('click', function(e) {
+        if (e.target.id === 'changePasswordPopup') {
+            closeChangePasswordPopup();
+        }
+    });
+});
+
+// Şifre değiştirme form submit
+document.addEventListener('DOMContentLoaded', function() {
+    const changePasswordForm = document.getElementById('changePasswordForm');
+
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
+
+            // Validasyon
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showPasswordError('Lütfen tüm alanları doldurun!');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showPasswordError('Yeni şifreler eşleşmiyor!');
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                showPasswordError('Yeni şifre en az 4 karakter olmalı!');
+                return;
+            }
+
+            // Butonu devre dışı bırak
+            changePasswordBtn.disabled = true;
+            changePasswordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Değiştiriliyor...';
+
+            try {
+                const loggedInUser = localStorage.getItem('loggedInUser');
+                const userId = localStorage.getItem('userId');
+
+                if (!loggedInUser || !userId) {
+                    throw new Error('Oturum bilgisi bulunamadı');
+                }
+
+                // Kullanıcıyı Supabase'den çek
+                const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!getUserResponse.ok) {
+                    throw new Error('Kullanıcı bilgisi alınamadı');
+                }
+
+                const users = await getUserResponse.json();
+
+                if (users.length === 0) {
+                    throw new Error('Kullanıcı bulunamadı');
+                }
+
+                const user = users[0];
+
+                // Mevcut şifre kontrolü
+                if (user.Pass !== currentPassword) {
+                    showPasswordError('Mevcut şifre yanlış!');
+                    changePasswordBtn.disabled = false;
+                    changePasswordBtn.innerHTML = '<i class="fas fa-save"></i> Şifreyi Değiştir';
+                    return;
+                }
+
+                // Şifreyi güncelle
+                const updateResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({
+                        Pass: newPassword
+                    })
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error('Şifre güncellenemedi');
+                }
+
+                console.log('Şifre başarıyla değiştirildi');
+
+                // Başarı mesajı
+                showPasswordSuccess('Şifre başarıyla değiştirildi!');
+                changePasswordBtn.innerHTML = '<i class="fas fa-check-circle"></i> Değiştirildi!';
+                changePasswordBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+
+                // Formu temizle ve popup'ı kapat
+                setTimeout(function() {
+                    closeChangePasswordPopup();
+                    changePasswordBtn.disabled = false;
+                    changePasswordBtn.innerHTML = '<i class="fas fa-save"></i> Şifreyi Değiştir';
+                    changePasswordBtn.style.background = '';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Şifre değiştirme hatası:', error);
+                showPasswordError('Bir hata oluştu: ' + error.message);
+                changePasswordBtn.disabled = false;
+                changePasswordBtn.innerHTML = '<i class="fas fa-save"></i> Şifreyi Değiştir';
+            }
+        });
+    }
 });
