@@ -10,7 +10,7 @@ let currentStatusFilter = 'all';
 // Supabase'den veri cekme fonksiyonu
 async function fetchDataFromSupabase() {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yukleniyor...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yukleniyor...</td></tr>';
 
     try {
         console.log('Supabase baglantisi baslatiliyor...');
@@ -37,7 +37,7 @@ async function fetchDataFromSupabase() {
         console.log('Gelen veri:', data);
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
             document.getElementById('totalCount').textContent = '0';
             return;
         }
@@ -48,7 +48,7 @@ async function fetchDataFromSupabase() {
         console.log('Toplam kayit yuklendi:', busData.length);
     } catch (error) {
         console.error('Supabase baglanti hatasi:', error);
-        tbody.innerHTML = '<tr><td colspan="10" class="no-data" style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i><br><strong>Hata:</strong> ' + error.message + '<br><small>Konsolu kontrol edin (F12)</small></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="no-data" style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i><br><strong>Hata:</strong> ' + error.message + '<br><small>Konsolu kontrol edin (F12)</small></td></tr>';
     }
 }
 
@@ -154,14 +154,14 @@ function applyFilters() {
     renderTable(filteredData);
 }
 
-// Tablo render fonksiyonu
+// Tablo render fonksiyonu - ID SÜTUNU EKLENDİ
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
     const totalCount = document.getElementById('totalCount');
     const displayedCount = document.getElementById('displayedCount');
 
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
         totalCount.textContent = '0';
         displayedCount.textContent = '0';
         return;
@@ -172,8 +172,9 @@ function renderTable(data) {
 
     tbody.innerHTML = limitedData.map(function(item) {
         const statusClass = getStatusClass(item.Arıza_Durumu);
-        const plakaValue = item.Plaka || '';
-        return '<tr ondblclick="showPlateDetails(' + "'" + plakaValue + "'" + ')">' +
+        const recordId = item.id || '';
+        return '<tr ondblclick="showRecordDetails(' + recordId + ')">' +
+            '<td><strong>' + (item.id || '-') + '</strong></td>' +
             '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
             '<td>' + (item.Plaka || '-') + '</td>' +
             '<td>' + formatDate(item.Giriş_Tarihi) + '</td>' +
@@ -191,11 +192,23 @@ function renderTable(data) {
     displayedCount.textContent = limitedData.length;
 }
 
-// Plaka detaylarını göster - POPUP
-function showPlateDetails(plaka) {
-    if (!plaka || plaka === '-') return;
+// ID'ye göre kayıt detaylarını göster - POPUP
+function showRecordDetails(recordId) {
+    if (!recordId) return;
 
-    console.log('Plaka detaylari aciliyor:', plaka);
+    console.log('Kayit detaylari aciliyor - ID:', recordId);
+
+    // ID'ye göre kaydı bul
+    const record = busData.find(function(item) {
+        return item.id === recordId;
+    });
+
+    if (!record) {
+        console.error('Kayit bulunamadi:', recordId);
+        return;
+    }
+
+    const plaka = record.Plaka;
 
     // Plakaya ait tüm kayıtları bul (Giriş_Tarihi'ne göre sıralı)
     const plateRecords = busData.filter(function(item) {
@@ -205,8 +218,6 @@ function showPlateDetails(plaka) {
         const dateB = new Date(b.Giriş_Tarihi || '1900-01-01');
         return dateB - dateA; // Yeniden eskiye
     });
-
-    if (plateRecords.length === 0) return;
 
     const latestRecord = plateRecords[0]; // En güncel kayıt
 
@@ -244,35 +255,73 @@ function showPlateDetails(plaka) {
         }
     });
 
-    // Popup içeriği
+    // Popup içeriği - TIKLANAN KAYDIN BİLGİLERİ
     const popupContent = '<div class="popup-header">' +
-        '<h2>' + plaka + '</h2>' +
+        '<h2>' + plaka + ' <small>(ID: ' + recordId + ')</small></h2>' +
         '<button class="popup-close" onclick="closePopup()"><i class="fas fa-times"></i></button>' +
     '</div>' +
     '<div class="popup-body">' +
-        '<div class="popup-item">' +
-            '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
-            '<span class="popup-value">' + daysInRepair + '</span>' +
+        '<div class="popup-section">' +
+            '<h3>Tıklanan Kayıt Bilgileri</h3>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Giriş Tarihi:</span>' +
+                '<span class="popup-value">' + formatDate(record.Giriş_Tarihi) + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Giriş Saati:</span>' +
+                '<span class="popup-value">' + formatTime(record.Giriş_Saati) + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Arıza:</span>' +
+                '<span class="popup-value">' + (record.Arıza || '-') + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Formu Açan:</span>' +
+                '<span class="popup-value">' + (record.Formu_Açan || '-') + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Arızayı Kapatan:</span>' +
+                '<span class="popup-value">' + (record.Arızayı_Kapatan || '-') + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Çıkış Tarihi:</span>' +
+                '<span class="popup-value">' + formatDate(record.Çıkış_Tarihi) + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Çıkış Saati:</span>' +
+                '<span class="popup-value">' + formatTime(record.Çıkış_Saati) + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Arıza Durumu:</span>' +
+                '<span class="popup-value"><span class="status-badge ' + getStatusClass(record.Arıza_Durumu) + '">' + (record.Arıza_Durumu || '-') + '</span></span>' +
+            '</div>' +
         '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
-            '<span class="popup-value">' + lastEntry + '</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
-            '<span class="popup-value">' + lastExit + '</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">En Son Arızası:</span>' +
-            '<span class="popup-value">' + lastFault + '</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
-            '<span class="popup-value">' + repairCount + ' Kez</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
-            '<span class="popup-value">' + totalDays + ' Gün</span>' +
+        '<div class="popup-section">' +
+            '<h3>Plaka Genel İstatistikleri</h3>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
+                '<span class="popup-value">' + daysInRepair + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
+                '<span class="popup-value">' + lastEntry + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
+                '<span class="popup-value">' + lastExit + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">En Son Arızası:</span>' +
+                '<span class="popup-value">' + lastFault + '</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
+                '<span class="popup-value">' + repairCount + ' Kez</span>' +
+            '</div>' +
+            '<div class="popup-item">' +
+                '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
+                '<span class="popup-value">' + totalDays + ' Gün</span>' +
+            '</div>' +
         '</div>' +
     '</div>';
 
