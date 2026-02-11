@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otobüs Arıza Durumu</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-bus"></i>
+                </div>
+                <div class="header-title">
+                    <h1>Otobüs Arıza Durumu</h1>
+                </div>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="theme-icon"></i>
+                <span id="theme-text">Karanlık Mod</span>
+            </button>
+        </div>
+
+        <div class="search-section">
+            <div class="search-grid">
+                <div class="search-field">
+                    <label>Araç Plakası</label>
+                    <input type="text" id="searchPlate" placeholder="Plaka ara...">
+                </div>
+                <div class="search-field">
+                    <label>Hat Numarası</label>
+                    <input type="text" id="searchRoute" placeholder="Hat numarası...">
+                </div>
+                <div class="search-field">
+                    <label>Durum</label>
+                    <select id="searchStatus">
+                        <option value="">Tümü</option>
+                        <option value="active">Aktif</option>
+                        <option value="breakdown">Arızalı</option>
+                        <option value="maintenance">Bakımda</option>
+                    </select>
+                </div>
+                <div class="search-field">
+                    <label>Öncelik</label>
+                    <select id="searchPriority">
+                        <option value="">Tümü</option>
+                        <option value="high">Yüksek</option>
+                        <option value="medium">Orta</option>
+                        <option value="low">Düşük</option>
+                    </select>
+                </div>
+            </div>
+            <div class="search-buttons">
+                <button class="btn btn-secondary" onclick="clearFilters()">
+                    <i class="fas fa-times"></i>
+                    Temizle
+                </button>
+                <button class="btn btn-primary" onclick="filterData()">
+                    <i class="fas fa-search"></i>
+                    Ara
+                </button>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <div class="data-header">
+                <h2>Araç Listesi</h2>
+                <div class="data-info">
+                    Toplam: <strong id="totalCount">0</strong> kayıt
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Plaka</th>
+                            <th>Hat No</th>
+                            <th>Araç Tipi</th>
+                            <th>Durum</th>
+                            <th>Arıza Türü</th>
+                            <th>Öncelik</th>
+                            <th>Konum</th>
+                            <th>Tarih/Saat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
