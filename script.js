@@ -39,10 +39,15 @@ async function fetchDataFromSupabase() {
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
             document.getElementById('totalCount').textContent = '0';
+            document.getElementById('displayedCount').textContent = '0';
             return;
         }
 
         busData = data;
+
+        // Toplam Kayıt = md_data'daki TÜM kayıtlar
+        document.getElementById('totalCount').textContent = busData.length;
+
         applyFilters();
 
         console.log('Toplam kayit yuklendi:', busData.length);
@@ -157,12 +162,10 @@ function applyFilters() {
 // Tablo render fonksiyonu - TEK TIKLAMA
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
-    const totalCount = document.getElementById('totalCount');
     const displayedCount = document.getElementById('displayedCount');
 
     if (data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
-        totalCount.textContent = '0';
         displayedCount.textContent = '0';
         return;
     }
@@ -188,11 +191,11 @@ function renderTable(data) {
         '</tr>';
     }).join('');
 
-    totalCount.textContent = data.length;
+    // Gösterilen = Filtrelenmiş kayıtlar (limit uygulanmış)
     displayedCount.textContent = limitedData.length;
 }
 
-// ID'ye göre kayıt detaylarını göster - SADECE PLAKA İSTATİSTİKLERİ
+// ID'ye göre kayıt detaylarını göster - TOPLAM BAKIM SÜRESİ DÜZELTİLDİ
 function showRecordDetails(recordId) {
     if (!recordId) return;
 
@@ -223,12 +226,13 @@ function showRecordDetails(recordId) {
 
     // 1. Kaç Gündür Arızalı
     let daysInRepair = 'Araç Arızalı Değil';
+    let currentRepairDays = 0;
     if (latestRecord.Giriş_Tarihi && !latestRecord.Çıkış_Tarihi) {
         const entryDate = new Date(latestRecord.Giriş_Tarihi);
         const today = new Date();
         const diffTime = Math.abs(today - entryDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        daysInRepair = diffDays + ' Gün';
+        currentRepairDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        daysInRepair = currentRepairDays + ' Gün';
     }
 
     // 2. En Son Ne Zaman Bakıma Girdi
@@ -243,10 +247,11 @@ function showRecordDetails(recordId) {
     // 5. Kaç Kere Bakıma Geldi
     const repairCount = plateRecords.length;
 
-    // 6. Toplam Bakımda Bekleme Süresi
+    // 6. Toplam Bakımda Bekleme Süresi = Tamamlanan bakımlar + Şu anki arıza süresi
     let totalDays = 0;
     plateRecords.forEach(function(record) {
         if (record.Giriş_Tarihi && record.Çıkış_Tarihi) {
+            // Tamamlanmış bakımlar
             const entry = new Date(record.Giriş_Tarihi);
             const exit = new Date(record.Çıkış_Tarihi);
             const diff = Math.abs(exit - entry);
@@ -254,6 +259,9 @@ function showRecordDetails(recordId) {
             totalDays += days;
         }
     });
+
+    // Şu anki arıza süresini de ekle
+    totalDays += currentRepairDays;
 
     // Popup içeriği - SADECE PLAKA İSTATİSTİKLERİ
     const popupContent = '<div class="popup-header">' +
