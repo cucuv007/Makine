@@ -10,59 +10,80 @@
 <body>
     <div class="container">
         <!-- Header -->
-        <header class="header">
+        <div class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <i class="fas fa-bus-alt"></i>
-                    <h1>Otobüs Arıza Durumu</h1>
+                    <i class="fas fa-bus"></i>
+                    <div>
+                        <h1>Otobüs Arıza Durumu</h1>
+                        <div class="user-info">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="loggedUsername">-</span>
+                            <button class="change-password-btn" onclick="openChangePasswordPopup()" title="Şifre Değiştir">
+                                <i class="fas fa-key"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Tema Değiştir">
-                    <i id="theme-icon" class="fas fa-moon"></i>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
                     <span id="theme-text">Karanlık Mod</span>
                 </button>
             </div>
-        </header>
+        </div>
 
         <!-- Search Section -->
         <div class="search-section">
             <div class="search-grid">
                 <div class="search-field">
                     <label for="searchSeriNo">
-                        <i class="fas fa-barcode"></i> Seri No
+                        <i class="fas fa-hashtag"></i>
+                        Seri No
                     </label>
                     <input type="text" id="searchSeriNo" placeholder="En az 3 karakter...">
                 </div>
+
                 <div class="search-field">
                     <label for="searchPlaka">
-                        <i class="fas fa-bus"></i> Plaka
+                        <i class="fas fa-car"></i>
+                        Plaka
                     </label>
                     <input type="text" id="searchPlaka" placeholder="En az 3 karakter...">
                 </div>
+
                 <div class="search-field">
                     <label for="searchAriza">
-                        <i class="fas fa-exclamation-triangle"></i> Arıza
+                        <i class="fas fa-wrench"></i>
+                        Arıza
                     </label>
                     <input type="text" id="searchAriza" placeholder="En az 3 karakter...">
                 </div>
+
                 <div class="search-field">
                     <label for="startDate">
-                        <i class="fas fa-calendar-alt"></i> Başlangıç Tarihi
+                        <i class="fas fa-calendar-alt"></i>
+                        Başlangıç Tarihi
                     </label>
                     <input type="date" id="startDate">
                 </div>
+
                 <div class="search-field">
                     <label for="endDate">
-                        <i class="fas fa-calendar-check"></i> Bitiş Tarihi
+                        <i class="fas fa-calendar-check"></i>
+                        Bitiş Tarihi
                     </label>
                     <input type="date" id="endDate">
                 </div>
             </div>
+
             <div class="search-actions">
                 <button class="btn btn-primary" onclick="applyFilters()">
-                    <i class="fas fa-search"></i> Ara
+                    <i class="fas fa-search"></i>
+                    Ara
                 </button>
                 <button class="btn btn-secondary" onclick="clearFilters()">
-                    <i class="fas fa-times"></i> Temizle
+                    <i class="fas fa-times"></i>
+                    Temizle
                 </button>
             </div>
         </div>
@@ -70,14 +91,15 @@
         <!-- Stats -->
         <div class="stats">
             <div class="stat-card">
-                <i class="fas fa-list"></i>
+                <i class="fas fa-database"></i>
                 <div class="stat-info">
                     <span class="stat-label">Toplam Kayıt</span>
                     <span class="stat-value" id="totalCount">0</span>
                 </div>
             </div>
+
             <div class="stat-card">
-                <i class="fas fa-eye"></i>
+                <i class="fas fa-filter"></i>
                 <div class="stat-info">
                     <span class="stat-label">Gösterilen</span>
                     <span class="stat-value" id="displayedCount">0</span>
@@ -91,11 +113,11 @@
                 <thead>
                     <tr>
                         <th><i class="fas fa-hashtag"></i> ID</th>
-                        <th><i class="fas fa-barcode"></i> Seri No</th>
-                        <th><i class="fas fa-bus"></i> Plaka</th>
+                        <th><i class="fas fa-hashtag"></i> Seri No</th>
+                        <th><i class="fas fa-car"></i> Plaka</th>
                         <th><i class="fas fa-calendar-alt"></i> Giriş Tarihi</th>
                         <th><i class="fas fa-clock"></i> Giriş Saati</th>
-                        <th><i class="fas fa-exclamation-triangle"></i> Arıza</th>
+                        <th><i class="fas fa-wrench"></i> Arıza</th>
                         <th><i class="fas fa-user"></i> Formu Açan</th>
                         <th><i class="fas fa-user-check"></i> Arızayı Kapatan</th>
                         <th><i class="fas fa-calendar-check"></i> Çıkış Tarihi</th>
@@ -116,31 +138,84 @@
 
         <!-- Limit Buttons -->
         <div class="limit-buttons">
-            <button id="btn-50" class="limit-btn active" onclick="setLimit(50)">
-                <i class="fas fa-list-ol"></i> 50
+            <button class="limit-btn active" id="btn-50" onclick="setLimit(50)">
+                <i class="fas fa-list"></i>
+                50
             </button>
-            <button id="btn-100" class="limit-btn" onclick="setLimit(100)">
-                <i class="fas fa-list-ol"></i> 100
+            <button class="limit-btn" id="btn-100" onclick="setLimit(100)">
+                <i class="fas fa-list"></i>
+                100
             </button>
-            <button id="btn-1000" class="limit-btn" onclick="setLimit(1000)">
-                <i class="fas fa-list-ol"></i> 1000
+            <button class="limit-btn" id="btn-1000" onclick="setLimit(1000)">
+                <i class="fas fa-list"></i>
+                1000
             </button>
-            <button id="btn-all" class="limit-btn" onclick="setLimit('all')">
-                <i class="fas fa-infinity"></i> ALL
+            <button class="limit-btn" id="btn-all" onclick="setLimit('all')">
+                <i class="fas fa-infinity"></i>
+                ALL
             </button>
-            <button id="btn-arizali" class="limit-btn btn-arizali" onclick="setStatusFilter('arizali')">
-                <i class="fas fa-exclamation-circle"></i> ARIZALI
+            <button class="limit-btn btn-arizali" id="btn-arizali" onclick="setStatusFilter('arizali')">
+                <i class="fas fa-exclamation-triangle"></i>
+                ARIZALI
             </button>
-            <button id="btn-yapilanlar" class="limit-btn btn-yapilanlar" onclick="setStatusFilter('yapilanlar')">
-                <i class="fas fa-check-circle"></i> YAPILANLAR
+            <button class="limit-btn btn-yapilanlar" id="btn-yapilanlar" onclick="setStatusFilter('yapilanlar')">
+                <i class="fas fa-check-circle"></i>
+                YAPILANLAR
             </button>
         </div>
     </div>
 
-    <!-- Popup Modal -->
+    <!-- Plaka Detay Popup -->
     <div id="platePopup" class="popup-overlay">
+        <div class="popup-container" id="popupContent">
+            <!-- Dinamik içerik buraya gelecek -->
+        </div>
+    </div>
+
+    <!-- Şifre Değiştirme Popup -->
+    <div id="changePasswordPopup" class="popup-overlay">
         <div class="popup-container">
-            <div id="popupContent"></div>
+            <div class="popup-header">
+                <h2><i class="fas fa-key"></i> Şifre Değiştir</h2>
+                <button class="popup-close" onclick="closeChangePasswordPopup()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="popup-body">
+                <form id="changePasswordForm" class="change-password-form">
+                    <div class="form-group">
+                        <label for="currentPassword">
+                            <i class="fas fa-lock"></i>
+                            Mevcut Şifre
+                        </label>
+                        <input type="password" id="currentPassword" placeholder="Mevcut şifrenizi girin" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">
+                            <i class="fas fa-key"></i>
+                            Yeni Şifre
+                        </label>
+                        <input type="password" id="newPassword" placeholder="Yeni şifrenizi girin" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">
+                            <i class="fas fa-check-circle"></i>
+                            Yeni Şifre (Tekrar)
+                        </label>
+                        <input type="password" id="confirmPassword" placeholder="Yeni şifrenizi tekrar girin" required>
+                    </div>
+
+                    <div id="passwordError" class="error-message"></div>
+                    <div id="passwordSuccess" class="success-message"></div>
+
+                    <button type="submit" class="btn btn-primary" id="changePasswordBtn">
+                        <i class="fas fa-save"></i>
+                        Şifreyi Değiştir
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
