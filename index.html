@@ -31,8 +31,8 @@
                     <input type="text" id="searchPlate" placeholder="Plaka ara...">
                 </div>
                 <div class="search-field">
-                    <label>Hat Numarası</label>
-                    <input type="text" id="searchRoute" placeholder="Hat numarası...">
+                    <label>Seri No</label>
+                    <input type="text" id="searchRoute" placeholder="Seri numarası...">
                 </div>
                 <div class="search-field">
                     <label>Durum</label>
@@ -77,16 +77,22 @@
                     <thead>
                         <tr>
                             <th>Plaka</th>
-                            <th>Hat No</th>
+                            <th>Seri No</th>
                             <th>Araç Tipi</th>
                             <th>Durum</th>
-                            <th>Arıza Türü</th>
+                            <th>Arıza</th>
                             <th>Öncelik</th>
-                            <th>Konum</th>
-                            <th>Tarih/Saat</th>
+                            <th>Formu Açan</th>
+                            <th>Giriş Tarihi/Saati</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
+                        <tr>
+                            <td colspan="8" class="no-data">
+                                <i class="fas fa-spinner fa-spin"></i><br>
+                                Veriler yükleniyor...
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
