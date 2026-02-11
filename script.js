@@ -7,32 +7,50 @@ let filteredData = [];
 
 // Supabase'den veri çekme fonksiyonu
 async function fetchDataFromSupabase() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yükleniyor...</td></tr>';
+
     try {
+        console.log('🔄 Supabase'e bağlanılıyor...');
+
         const response = await fetch(`${SUPABASE_URL}/rest/v1/md_data?select=*`, {
+            method: 'GET',
             headers: {
                 'apikey': SUPABASE_KEY,
                 'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
             }
         });
 
+        console.log('📡 Response status:', response.status);
+
         if (!response.ok) {
-            throw new Error('Veri çekme hatası: ' + response.statusText);
+            const errorText = await response.text();
+            console.error('❌ API Hatası:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
+        console.log('✅ Gelen veri:', data);
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayıt bulunamadı</td></tr>';
+            document.getElementById('totalCount').textContent = '0';
+            return;
+        }
 
         // Supabase verisini uygun formata dönüştür
         busData = data.map(item => ({
             id: item.id,
             seriNo: item.Seri_No || '-',
             plate: item.Plaka || '-',
-            route: extractRoute(item.Plaka), // Plakadan hat çıkar (opsiyonel)
-            type: '12M', // Varsayılan, gerekirse dinamik yapılabilir
+            route: item.Seri_No || '-',
+            type: '12M',
             status: getStatus(item.Arıza_Durumu),
             issue: item.Arıza || '-',
             priority: getPriority(item.Arıza_Durumu),
-            location: '-', // Tabloda yok, gerekirse eklenebilir
+            location: '-',
             datetime: formatDateTime(item.Giriş_Tarihi, item.Giriş_Saati),
             exitDate: formatDateTime(item.Çıkış_Tarihi, item.Çıkış_Saati),
             openedBy: item.Formu_Açan || '-',
@@ -44,58 +62,55 @@ async function fetchDataFromSupabase() {
         filteredData = [...busData];
         renderTable(filteredData);
 
-        console.log('✅ Supabase'den', busData.length, 'kayıt çekildi');
+        console.log('✅ Toplam', busData.length, 'kayıt yüklendi');
     } catch (error) {
         console.error('❌ Supabase bağlantı hatası:', error);
-        showError('Veriler yüklenirken hata oluştu. Lütfen sayfayı yenileyin.');
+        tbody.innerHTML = `<tr><td colspan="8" class="no-data" style="color: var(--accent-red);">
+            <i class="fas fa-exclamation-triangle"></i><br>
+            <strong>Hata:</strong> ${error.message}<br>
+            <small>Konsolu kontrol edin (F12)</small>
+        </td></tr>`;
     }
 }
 
 // Arıza durumuna göre status belirleme
 function getStatus(arizaDurumu) {
-    if (!arizaDurumu) return 'active';
+    if (!arizaDurumu) return 'breakdown';
 
-    const durum = arizaDurumu.toLowerCase();
-    if (durum.includes('açık') || durum.includes('devam')) return 'breakdown';
-    if (durum.includes('kapalı') || durum.includes('tamamlandı')) return 'active';
-    if (durum.includes('bakım')) return 'maintenance';
+    const durum = arizaDurumu.toLowerCase().trim();
 
-    return 'breakdown'; // Varsayılan
+    if (durum === 'açık' || durum.includes('devam')) return 'breakdown';
+    if (durum === 'kapalı' || durum === 'kapali' || durum.includes('tamamlan')) return 'active';
+    if (durum.includes('bakım') || durum.includes('bakim')) return 'maintenance';
+
+    return 'breakdown';
 }
 
 // Öncelik belirleme
 function getPriority(arizaDurumu) {
-    if (!arizaDurumu) return 'low';
+    if (!arizaDurumu) return 'medium';
 
     const durum = arizaDurumu.toLowerCase();
-    if (durum.includes('acil') || durum.includes('kritik')) return 'high';
+    if (durum.includes('acil') || durum.includes('kritik') || durum === 'açık') return 'high';
     if (durum.includes('orta')) return 'medium';
+    if (durum === 'kapalı' || durum === 'kapali') return 'low';
 
-    return 'low';
+    return 'medium';
 }
 
 // Tarih ve saat formatlama
 function formatDateTime(date, time) {
     if (!date) return '-';
 
-    const dateStr = new Date(date).toLocaleDateString('tr-TR');
-    const timeStr = time ? time.substring(0, 5) : '';
+    try {
+        const dateObj = new Date(date);
+        const dateStr = dateObj.toLocaleDateString('tr-TR');
+        const timeStr = time ? time.substring(0, 5) : '';
 
-    return timeStr ? `${dateStr} ${timeStr}` : dateStr;
-}
-
-// Plakadan hat numarası çıkarma (opsiyonel)
-function extractRoute(plaka) {
-    // Eğer plakada hat bilgisi varsa çıkar, yoksa '-' döndür
-    return '-';
-}
-
-// Hata mesajı gösterme
-function showError(message) {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = `<tr><td colspan="8" class="no-data" style="color: var(--accent-red);">
-        <i class="fas fa-exclamation-triangle"></i><br>${message}
-    </td></tr>`;
+        return timeStr ? `${dateStr} ${timeStr}` : dateStr;
+    } catch (e) {
+        return '-';
+    }
 }
 
 // Tablo render fonksiyonu
@@ -157,7 +172,7 @@ function filterData() {
     filteredData = busData.filter(bus => {
         return (
             (plate === '' || bus.plate.toLowerCase().includes(plate)) &&
-            (route === '' || bus.seriNo.toString().includes(route)) &&
+            (route === '' || bus.seriNo.toString().toLowerCase().includes(route)) &&
             (status === '' || bus.status === status) &&
             (priority === '' || bus.priority === priority)
         );
@@ -200,6 +215,8 @@ function toggleTheme() {
 
 // Sayfa yüklendiğinde
 window.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Sayfa yüklendi');
+
     // Tema yükle
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -214,10 +231,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Supabase'den veri çek
     fetchDataFromSupabase();
-});
 
-// Gerçek zamanlı arama
-document.addEventListener('DOMContentLoaded', () => {
+    // Gerçek zamanlı arama
     document.getElementById('searchPlate').addEventListener('input', filterData);
     document.getElementById('searchRoute').addEventListener('input', filterData);
     document.getElementById('searchStatus').addEventListener('change', filterData);
