@@ -1,610 +1,409 @@
 // Supabase Configuration
-const SUPABASE_URL = 'https://yfiulwcqyxgvpiefxgph.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmaXVsd2NxeXhndnBpZWZ4Z3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MDMwMzgsImV4cCI6MjA4NjM3OTAzOH0.GlE4Q71Ja_vfDKhBF4j9pEFIIVnkaM8rPrmdRnibmmg';
+var SUPABASE_URL = 'https://yfiulwcqyxgvpiefxgph.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmaXVsd2NxeXhndnBpZWZ4Z3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5NzY3NzIsImV4cCI6MjA1MzU1Mjc3Mn0.5_2ypx7vZEKYOt-2hqxqJqxWJYqxqJqxqJqxqJqxqJo';
 
-let busData = [];
-let filteredData = [];
-let currentLimit = 50;
-let currentStatusFilter = 'all';
+// Global Variables
+var allData = [];
+var filteredData = [];
+var currentLimit = 50;
+var currentStatusFilter = null;
 
-// Login kontrolü - Sayfa yüklendiğinde
-function checkLogin() {
-    const loggedInUser = localStorage.getItem('loggedInUser');
+// DOM Elements
+var themeToggle = document.getElementById('themeToggle');
+var body = document.body;
+var searchSeriNoInput = document.getElementById('searchSeriNo');
+var searchPlakaInput = document.getElementById('searchPlaka');
+var searchArizaInput = document.getElementById('searchAriza');
+var startDateInput = document.getElementById('startDate');
+var endDateInput = document.getElementById('endDate');
+var searchButton = document.getElementById('searchButton');
+var dataTableBody = document.getElementById('dataTableBody');
+var loadingSpinner = document.getElementById('loadingSpinner');
 
-    if (!loggedInUser) {
-        // Login yapılmamışsa login.html'e yönlendir
-        window.location.href = 'login.html';
-        return false;
-    }
-
-    // Kullanıcı adını göster
-    document.getElementById('loggedUsername').textContent = loggedInUser;
-    return true;
+// Theme Toggle
+var savedTheme = localStorage.getItem('theme') || 'light';
+if (savedTheme === 'dark') {
+    body.classList.add('dark-mode');
+    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
-// Supabase'den veri cekme fonksiyonu
+themeToggle.addEventListener('click', function() {
+    body.classList.toggle('dark-mode');
+    var isDark = body.classList.contains('dark-mode');
+    themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+});
+
+// Fetch Data from Supabase
 async function fetchDataFromSupabase() {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yukleniyor...</td></tr>';
-
     try {
-        console.log('Supabase baglantisi baslatiliyor...');
-
-        const response = await fetch(SUPABASE_URL + '/rest/v1/md_data?select=*&order=Giriş_Tarihi.desc', {
+        loadingSpinner.style.display = 'flex';
+        
+        var response = await fetch(SUPABASE_URL + '/rest/v1/md_data?select=*&order=Giris_Tarihi.desc', {
             method: 'GET',
             headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': 'Bearer ' + SUPABASE_KEY,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                'Content-Type': 'application/json'
             }
         });
 
-        console.log('Response status:', response.status);
-
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API Hatasi:', errorText);
-            throw new Error('HTTP ' + response.status + ': ' + errorText);
+            throw new Error('HTTP error! status: ' + response.status);
         }
 
-        const data = await response.json();
-        console.log('Gelen veri:', data);
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-inbox"></i><br>Tabloda kayit bulunamadi</td></tr>';
-            document.getElementById('totalCount').textContent = '0';
-            document.getElementById('displayedCount').textContent = '0';
-            return;
-        }
-
-        busData = data;
-
-        // Toplam Kayıt = md_data'daki TÜM kayıtlar
-        document.getElementById('totalCount').textContent = busData.length;
-
+        var data = await response.json();
+        console.log('Supabase\'den gelen veri:', data);
+        
+        allData = data;
+        filteredData = data;
+        
         applyFilters();
-
-        console.log('Toplam kayit yuklendi:', busData.length);
+        
     } catch (error) {
-        console.error('Supabase baglanti hatasi:', error);
-        tbody.innerHTML = '<tr><td colspan="11" class="no-data" style="color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i><br><strong>Hata:</strong> ' + error.message + '<br><small>Konsolu kontrol edin (F12)</small></td></tr>';
+        console.error('Veri çekme hatası:', error);
+        dataTableBody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: red;">Hata: ' + error.message + '</td></tr>';
+    } finally {
+        loadingSpinner.style.display = 'none';
     }
 }
 
-// Tarih formatlama
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    try {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('tr-TR');
-    } catch (e) {
-        return dateStr;
-    }
-}
-
-// Saat formatlama
-function formatTime(timeStr) {
-    if (!timeStr) return '-';
-    try {
-        return timeStr.substring(0, 5);
-    } catch (e) {
-        return timeStr;
-    }
-}
-
-// Ariza durumuna gore badge class - SADECE YEŞİL VE KIRMIZI
-function getStatusClass(arizaDurumu) {
-    if (!arizaDurumu) return 'status-breakdown';
-
-    const durum = arizaDurumu.toLowerCase().trim();
-
-    // Yapıldı = Yeşil
-    if (durum === 'yapildi' || durum === 'yapıldı' || durum === 'yapilmis' || durum === 'yapılmış') {
-        return 'status-active';
-    }
-
-    // Arızalı = Kırmızı (default)
-    return 'status-breakdown';
-}
-
-// Tüm filtreleri uygula
+// Apply Filters
 function applyFilters() {
-    const seriNo = document.getElementById('searchSeriNo').value.trim();
-    const plaka = document.getElementById('searchPlaka').value.trim();
-    const ariza = document.getElementById('searchAriza').value.trim();
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-
-    console.log('Filtreler:', {seriNo: seriNo, plaka: plaka, ariza: ariza, startDate: startDate, endDate: endDate, statusFilter: currentStatusFilter});
-
-    filteredData = busData.filter(function(item) {
-        // Seri No filtresi - En az 3 karakter
-        let seriNoMatch = true;
-        if (seriNo.length >= 3) {
-            seriNoMatch = item.Seri_No && item.Seri_No.toString().toLowerCase().includes(seriNo.toLowerCase());
+    var seriNoValue = searchSeriNoInput.value.trim().toLowerCase();
+    var plakaValue = searchPlakaInput.value.trim().toLowerCase();
+    var arizaValue = searchArizaInput.value.trim().toLowerCase();
+    var startDate = startDateInput.value;
+    var endDate = endDateInput.value;
+    
+    filteredData = allData.filter(function(item) {
+        var matchSeriNo = !seriNoValue || (item.Seri_No && item.Seri_No.toString().toLowerCase().includes(seriNoValue));
+        var matchPlaka = !plakaValue || (item.Plaka && item.Plaka.toLowerCase().includes(plakaValue));
+        var matchAriza = !arizaValue || (item.Ariza && item.Ariza.toLowerCase().includes(arizaValue));
+        
+        var matchDate = true;
+        if (startDate && item.Giris_Tarihi) {
+            matchDate = matchDate && (item.Giris_Tarihi >= startDate);
         }
-
-        // Plaka filtresi - En az 3 karakter
-        let plakaMatch = true;
-        if (plaka.length >= 3) {
-            plakaMatch = item.Plaka && item.Plaka.toLowerCase().includes(plaka.toLowerCase());
+        if (endDate && item.Giris_Tarihi) {
+            matchDate = matchDate && (item.Giris_Tarihi <= endDate);
         }
-
-        // Ariza filtresi - En az 3 karakter
-        let arizaMatch = true;
-        if (ariza.length >= 3) {
-            arizaMatch = item.Arıza && item.Arıza.toLowerCase().includes(ariza.toLowerCase());
-        }
-
-        // Tarih filtresi
-        let dateMatch = true;
-        if (startDate || endDate) {
-            if (item.Giriş_Tarihi) {
-                const itemDate = new Date(item.Giriş_Tarihi);
-                if (startDate) {
-                    const start = new Date(startDate);
-                    start.setHours(0, 0, 0, 0);
-                    if (itemDate < start) dateMatch = false;
-                }
-                if (endDate) {
-                    const end = new Date(endDate);
-                    end.setHours(23, 59, 59, 999);
-                    if (itemDate > end) dateMatch = false;
-                }
-            } else {
-                dateMatch = false;
-            }
-        }
-
-        // Durum filtresi - BAĞIMSIZ
-        let statusMatch = true;
+        
+        var matchStatus = true;
         if (currentStatusFilter === 'arizali') {
-            const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
-            statusMatch = durum !== 'yapildi' && durum !== 'yapıldı' && durum !== 'yapilmis' && durum !== 'yapılmış';
+            matchStatus = item.Ariza_Durumu && item.Ariza_Durumu.toLowerCase() === 'arızalı';
         } else if (currentStatusFilter === 'yapilanlar') {
-            const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
-            statusMatch = durum === 'yapildi' || durum === 'yapıldı' || durum === 'yapilmis' || durum === 'yapılmış';
+            matchStatus = item.Ariza_Durumu && item.Ariza_Durumu.toLowerCase() === 'yapıldı';
         }
-
-        return seriNoMatch && plakaMatch && arizaMatch && dateMatch && statusMatch;
+        
+        return matchSeriNo && matchPlaka && matchAriza && matchDate && matchStatus;
     });
-
-    console.log('Filtrelenmis veri sayisi:', filteredData.length);
-    renderTable(filteredData);
+    
+    renderTable();
 }
 
-// Tablo render fonksiyonu - TEK TIKLAMA
-function renderTable(data) {
-    const tbody = document.getElementById('tableBody');
-    const displayedCount = document.getElementById('displayedCount');
-
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-inbox"></i><br>Kayit bulunamadi</td></tr>';
-        displayedCount.textContent = '0';
+// Render Table
+function renderTable() {
+    var dataToShow = filteredData.slice(0, currentLimit);
+    
+    if (dataToShow.length === 0) {
+        dataTableBody.innerHTML = '<tr><td colspan="11" style="text-align: center;">Veri bulunamadı</td></tr>';
         return;
     }
-
-    // Limit uygula - HER BUTON BAĞIMSIZ
-    const limitedData = currentLimit === 'all' ? data : data.slice(0, currentLimit);
-
-    tbody.innerHTML = limitedData.map(function(item) {
-        const statusClass = getStatusClass(item.Arıza_Durumu);
-        const recordId = item.id || '';
-        return '<tr onclick="showRecordDetails(' + recordId + ')" style="cursor: pointer;">' +
-            '<td><strong>' + (item.id || '-') + '</strong></td>' +
-            '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
+    
+    dataTableBody.innerHTML = '';
+    
+    dataToShow.forEach(function(item) {
+        var row = document.createElement('tr');
+        row.ondblclick = function() {
+            openDetailPopup(item.Plaka);
+        };
+        
+        var statusClass = getStatusClass(item.Ariza_Durumu);
+        
+        row.innerHTML = 
+            '<td>' + (item.Seri_No || '-') + '</td>' +
             '<td>' + (item.Plaka || '-') + '</td>' +
-            '<td>' + formatDate(item.Giriş_Tarihi) + '</td>' +
-            '<td>' + formatTime(item.Giriş_Saati) + '</td>' +
-            '<td>' + (item.Arıza || '-') + '</td>' +
-            '<td>' + (item.Formu_Açan || '-') + '</td>' +
-            '<td>' + (item.Arızayı_Kapatan || '-') + '</td>' +
-            '<td>' + formatDate(item.Çıkış_Tarihi) + '</td>' +
-            '<td>' + formatTime(item.Çıkış_Saati) + '</td>' +
-            '<td><span class="status-badge ' + statusClass + '">' + (item.Arıza_Durumu || '-') + '</span></td>' +
-        '</tr>';
-    }).join('');
-
-    // Gösterilen = Filtrelenmiş kayıtlar (limit uygulanmış)
-    displayedCount.textContent = limitedData.length;
-}
-// ID'ye göre kayıt detaylarını göster - TOPLAM BAKIM SÜRESİ DÜZELTİLDİ
-function showRecordDetails(recordId) {
-    if (!recordId) return;
-
-    console.log('Kayit detaylari aciliyor - ID:', recordId);
-
-    // ID'ye göre kaydı bul
-    const record = busData.find(function(item) {
-        return item.id === recordId;
+            '<td>' + (item.Giris_Tarihi || '-') + '</td>' +
+            '<td>' + (item.Giris_Saati || '-') + '</td>' +
+            '<td>' + (item.Ariza || '-') + '</td>' +
+            '<td>' + (item.Formu_Acan || '-') + '</td>' +
+            '<td>' + (item.Arizayi_Kapatan || '-') + '</td>' +
+            '<td>' + (item.Cikis_Tarihi || '-') + '</td>' +
+            '<td>' + (item.Cikis_Saati || '-') + '</td>' +
+            '<td><span class="status-badge ' + statusClass + '">' + (item.Ariza_Durumu || '-') + '</span></td>' +
+            '<td>' + (item.Resim ? '<a href="' + item.Resim + '" target="_blank">Görüntüle</a>' : '-') + '</td>';
+        
+        dataTableBody.appendChild(row);
     });
+}
 
-    if (!record) {
-        console.error('Kayit bulunamadi:', recordId);
-        return;
+// Get Status Class
+function getStatusClass(status) {
+    if (!status) return '';
+    var lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'yapıldı') {
+        return 'status-active';
+    } else {
+        return 'status-breakdown';
     }
+}
 
-    const plaka = record.Plaka;
-
-    // Plakaya ait tüm kayıtları bul (Giriş_Tarihi'ne göre sıralı)
-    const plateRecords = busData.filter(function(item) {
-        return item.Plaka === plaka;
-    }).sort(function(a, b) {
-        const dateA = new Date(a.Giriş_Tarihi || '1900-01-01');
-        const dateB = new Date(b.Giriş_Tarihi || '1900-01-01');
-        return dateB - dateA; // Yeniden eskiye
-    });
-
-    const latestRecord = plateRecords[0]; // En güncel kayıt
-
-    // 1. Kaç Gündür Arızalı
-    let daysInRepair = 'Araç Arızalı Değil';
-    let currentRepairDays = 0;
-    if (latestRecord.Giriş_Tarihi && !latestRecord.Çıkış_Tarihi) {
-        const entryDate = new Date(latestRecord.Giriş_Tarihi);
-        const today = new Date();
-        const diffTime = Math.abs(today - entryDate);
-        currentRepairDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        daysInRepair = currentRepairDays + ' Gün';
+// Real-time Search (3+ characters)
+searchSeriNoInput.addEventListener('input', function() {
+    if (searchSeriNoInput.value.length >= 3 || searchSeriNoInput.value.length === 0) {
+        applyFilters();
     }
+});
 
-    // 2. En Son Ne Zaman Bakıma Girdi
-    const lastEntry = latestRecord.Giriş_Tarihi ? formatDate(latestRecord.Giriş_Tarihi) : '-';
+searchPlakaInput.addEventListener('input', function() {
+    if (searchPlakaInput.value.length >= 3 || searchPlakaInput.value.length === 0) {
+        applyFilters();
+    }
+});
 
-    // 3. En Son Çıkış Tarihi
-    const lastExit = latestRecord.Çıkış_Tarihi ? formatDate(latestRecord.Çıkış_Tarihi) : '-';
+searchArizaInput.addEventListener('input', function() {
+    if (searchArizaInput.value.length >= 3 || searchArizaInput.value.length === 0) {
+        applyFilters();
+    }
+});
 
-    // 4. En Son Arızası
-    const lastFault = latestRecord.Arıza || '-';
-
-    // 5. Kaç Kere Bakıma Geldi
-    const repairCount = plateRecords.length;
-
-    // 6. Toplam Bakımda Bekleme Süresi = Tamamlanan bakımlar + Şu anki arıza süresi
-    let totalDays = 0;
-    plateRecords.forEach(function(record) {
-        if (record.Giriş_Tarihi && record.Çıkış_Tarihi) {
-            // Tamamlanmış bakımlar
-            const entry = new Date(record.Giriş_Tarihi);
-            const exit = new Date(record.Çıkış_Tarihi);
-            const diff = Math.abs(exit - entry);
-            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-            totalDays += days;
-        }
-    });
-
-    // Şu anki arıza süresini de ekle
-    totalDays += currentRepairDays;
-
-    // Popup içeriği - SADECE PLAKA İSTATİSTİKLERİ
-    const popupContent = '<div class="popup-header">' +
-        '<h2>' + plaka + '</h2>' +
-        '<button class="popup-close" onclick="closePopup()"><i class="fas fa-times"></i></button>' +
-    '</div>' +
-    '<div class="popup-body">' +
-        '<div class="popup-item">' +
-            '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
-            '<span class="popup-value">' + daysInRepair + '</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
-            '<span class="popup-value">' + lastEntry + '</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
-            '<span class="popup-value">' + lastExit + '</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">En Son Arızası:</span>' +
-            '<span class="popup-value">' + lastFault + '</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
-            '<span class="popup-value">' + repairCount + ' Kez</span>' +
-        '</div>' +
-        '<div class="popup-item">' +
-            '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
-            '<span class="popup-value">' + totalDays + ' Gün</span>' +
-        '</div>' +
-    '</div>';
-
-    document.getElementById('popupContent').innerHTML = popupContent;
-    document.getElementById('platePopup').style.display = 'flex';
-}
-
-// Popup kapat
-function closePopup() {
-    document.getElementById('platePopup').style.display = 'none';
-}
-
-// Filtreleri temizleme
-function clearFilters() {
-    document.getElementById('searchSeriNo').value = '';
-    document.getElementById('searchPlaka').value = '';
-    document.getElementById('searchAriza').value = '';
-    document.getElementById('startDate').value = '';
-    document.getElementById('endDate').value = '';
-    currentStatusFilter = 'all';
-    currentLimit = 50;
-    updateLimitButtons();
+// Search Button
+searchButton.addEventListener('click', function() {
     applyFilters();
-}
+});
 
-// Limit degistirme - BAĞIMSIZ
+// Limit Buttons
+document.getElementById('limit50').addEventListener('click', function() {
+    setLimit(50);
+});
+
+document.getElementById('limit100').addEventListener('click', function() {
+    setLimit(100);
+});
+
+document.getElementById('limit1000').addEventListener('click', function() {
+    setLimit(1000);
+});
+
+document.getElementById('limitAll').addEventListener('click', function() {
+    setLimit(filteredData.length);
+});
+
 function setLimit(limit) {
     currentLimit = limit;
-    currentStatusFilter = 'all'; // Durum filtresini sıfırla
-    updateLimitButtons();
-    renderTable(filteredData);
-}
-
-// Durum filtresi - BAĞIMSIZ
-function setStatusFilter(status) {
-    currentStatusFilter = status;
-    currentLimit = 'all'; // Limit'i sıfırla, tüm kayıtları göster
-    updateLimitButtons();
-    applyFilters();
-}
-
-// Limit butonlarini guncelle
-function updateLimitButtons() {
-    // Tum butonlari pasif yap
+    
     document.querySelectorAll('.limit-btn').forEach(function(btn) {
         btn.classList.remove('active');
     });
+    
+    if (limit === 50) {
+        document.getElementById('limit50').classList.add('active');
+    } else if (limit === 100) {
+        document.getElementById('limit100').classList.add('active');
+    } else if (limit === 1000) {
+        document.getElementById('limit1000').classList.add('active');
+    } else {
+        document.getElementById('limitAll').classList.add('active');
+    }
+    
+    renderTable();
+}
 
-    // Aktif butonu isle
+// Status Filter Buttons
+document.getElementById('filterArizali').addEventListener('click', function() {
     if (currentStatusFilter === 'arizali') {
-        document.getElementById('btn-arizali').classList.add('active');
-    } else if (currentStatusFilter === 'yapilanlar') {
-        document.getElementById('btn-yapilanlar').classList.add('active');
+        currentStatusFilter = null;
+        document.getElementById('filterArizali').classList.remove('active');
     } else {
-        if (currentLimit === 50) {
-            document.getElementById('btn-50').classList.add('active');
-        } else if (currentLimit === 100) {
-            document.getElementById('btn-100').classList.add('active');
-        } else if (currentLimit === 1000) {
-            document.getElementById('btn-1000').classList.add('active');
-        } else if (currentLimit === 'all') {
-            document.getElementById('btn-all').classList.add('active');
-        }
+        currentStatusFilter = 'arizali';
+        document.getElementById('filterArizali').classList.add('active');
+        document.getElementById('filterYapilanlar').classList.remove('active');
     }
-}
+    applyFilters();
+});
 
-// Tema degistirme
-function toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-    html.setAttribute('data-theme', newTheme);
-
-    const icon = document.getElementById('theme-icon');
-    const text = document.getElementById('theme-text');
-
-    if (newTheme === 'dark') {
-        icon.className = 'fas fa-sun';
-        text.textContent = 'Aydinlik Mod';
+document.getElementById('filterYapilanlar').addEventListener('click', function() {
+    if (currentStatusFilter === 'yapilanlar') {
+        currentStatusFilter = null;
+        document.getElementById('filterYapilanlar').classList.remove('active');
     } else {
-        icon.className = 'fas fa-moon';
-        text.textContent = 'Karanlik Mod';
+        currentStatusFilter = 'yapilanlar';
+        document.getElementById('filterYapilanlar').classList.add('active');
+        document.getElementById('filterArizali').classList.remove('active');
     }
+    applyFilters();
+});
 
-    localStorage.setItem('theme', newTheme);
-}
-
-// Şifre değiştirme popup aç
-function openChangePasswordPopup() {
-    document.getElementById('changePasswordPopup').style.display = 'flex';
-    document.getElementById('currentPassword').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmPassword').value = '';
-    document.getElementById('passwordError').classList.remove('show');
-    document.getElementById('passwordSuccess').classList.remove('show');
-}
-
-// Şifre değiştirme popup kapat
-function closeChangePasswordPopup() {
-    document.getElementById('changePasswordPopup').style.display = 'none';
-}
-
-// Şifre değiştirme hata mesajı
-function showPasswordError(message) {
-    const errorDiv = document.getElementById('passwordError');
-    errorDiv.textContent = message;
-    errorDiv.classList.add('show');
-
-    setTimeout(function() {
-        errorDiv.classList.remove('show');
-    }, 4000);
-}
-
-// Şifre değiştirme başarı mesajı
-function showPasswordSuccess(message) {
-    const successDiv = document.getElementById('passwordSuccess');
-    successDiv.textContent = message;
-    successDiv.classList.add('show');
-
-    setTimeout(function() {
-        successDiv.classList.remove('show');
-    }, 4000);
-}
-// Sayfa yuklendiginde
-window.addEventListener('DOMContentLoaded', function() {
-    console.log('Sayfa yuklendi');
-
-    // Login kontrolü
-    if (!checkLogin()) {
+// Detail Popup
+function openDetailPopup(plaka) {
+    var plakaData = allData.filter(function(item) {
+        return item.Plaka === plaka;
+    });
+    
+    if (plakaData.length === 0) {
+        alert('Bu plaka için veri bulunamadı!');
         return;
     }
-
-    // Tema yukle
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-
-    const icon = document.getElementById('theme-icon');
-    const text = document.getElementById('theme-text');
-
-    if (savedTheme === 'dark') {
-        icon.className = 'fas fa-sun';
-        text.textContent = 'Aydinlik Mod';
+    
+    plakaData.sort(function(a, b) {
+        var dateA = new Date(a.Giris_Tarihi + ' ' + (a.Giris_Saati || '00:00'));
+        var dateB = new Date(b.Giris_Tarihi + ' ' + (b.Giris_Saati || '00:00'));
+        return dateB - dateA;
+    });
+    
+    var latestEntry = plakaData[0];
+    
+    var daysFaulty = '-';
+    if (latestEntry.Giris_Tarihi && !latestEntry.Cikis_Tarihi) {
+        var girisDate = new Date(latestEntry.Giris_Tarihi);
+        var today = new Date();
+        var diffTime = Math.abs(today - girisDate);
+        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        daysFaulty = diffDays + ' gün';
+    } else if (latestEntry.Cikis_Tarihi) {
+        daysFaulty = 'Arıza kapatıldı';
     }
-
-    // Supabase'den veri cek
-    fetchDataFromSupabase();
-
-    // Gercek zamanli arama - En az 3 karakter
-    document.getElementById('searchSeriNo').addEventListener('input', function() {
-        if (this.value.length === 0 || this.value.length >= 3) {
-            applyFilters();
-        }
+    
+    var totalFaults = plakaData.length;
+    
+    var last5Faults = plakaData.slice(0, 5);
+    
+    var detailHTML = '<h2>' + plaka + '</h2>';
+    detailHTML += '<p style="font-weight: bold; font-style: italic; margin: 15px 0;">Kaç Gündür Arızalı: ' + daysFaulty + '</p>';
+    detailHTML += '<p style="margin: 10px 0;"><strong>Toplam Arıza Sayısı:</strong> ' + totalFaults + '</p>';
+    detailHTML += '<h3 style="margin-top: 20px;">Son 5 Arıza:</h3>';
+    detailHTML += '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+    detailHTML += '<thead><tr style="background: #f0f0f0;"><th style="padding: 8px; border: 1px solid #ddd;">Giriş Tarihi</th><th style="padding: 8px; border: 1px solid #ddd;">Arıza</th><th style="padding: 8px; border: 1px solid #ddd;">Durum</th></tr></thead>';
+    detailHTML += '<tbody>';
+    
+    last5Faults.forEach(function(fault) {
+        detailHTML += '<tr>';
+        detailHTML += '<td style="padding: 8px; border: 1px solid #ddd;">' + (fault.Giris_Tarihi || '-') + '</td>';
+        detailHTML += '<td style="padding: 8px; border: 1px solid #ddd;">' + (fault.Ariza || '-') + '</td>';
+        detailHTML += '<td style="padding: 8px; border: 1px solid #ddd;">' + (fault.Ariza_Durumu || '-') + '</td>';
+        detailHTML += '</tr>';
     });
+    
+    detailHTML += '</tbody></table>';
+    
+    document.getElementById('detailContent').innerHTML = detailHTML;
+    document.getElementById('detailPopup').style.display = 'flex';
+}
 
-    document.getElementById('searchPlaka').addEventListener('input', function() {
-        if (this.value.length === 0 || this.value.length >= 3) {
-            applyFilters();
-        }
-    });
-
-    document.getElementById('searchAriza').addEventListener('input', function() {
-        if (this.value.length === 0 || this.value.length >= 3) {
-            applyFilters();
-        }
-    });
-
-    // Tarih degisikliklerinde filtrele
-    document.getElementById('startDate').addEventListener('change', applyFilters);
-    document.getElementById('endDate').addEventListener('change', applyFilters);
-
-    // Limit butonlarini guncelle
-    updateLimitButtons();
-
-    // Popup dışına tıklanınca kapat
-    document.getElementById('platePopup').addEventListener('click', function(e) {
-        if (e.target.id === 'platePopup') {
-            closePopup();
-        }
-    });
-
-    // Şifre değiştirme popup dışına tıklanınca kapat
-    document.getElementById('changePasswordPopup').addEventListener('click', function(e) {
-        if (e.target.id === 'changePasswordPopup') {
-            closeChangePasswordPopup();
-        }
-    });
+document.getElementById('closeDetailPopup').addEventListener('click', function() {
+    document.getElementById('detailPopup').style.display = 'none';
 });
 
-// Şifre değiştirme form submit
-document.addEventListener('DOMContentLoaded', function() {
-    const changePasswordForm = document.getElementById('changePasswordForm');
-
-    if (changePasswordForm) {
-        changePasswordForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const changePasswordBtn = document.getElementById('changePasswordBtn');
-
-            // Validasyon
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showPasswordError('Lütfen tüm alanları doldurun!');
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                showPasswordError('Yeni şifreler eşleşmiyor!');
-                return;
-            }
-
-            if (newPassword.length < 4) {
-                showPasswordError('Yeni şifre en az 4 karakter olmalı!');
-                return;
-            }
-
-            // Butonu devre dışı bırak
-            changePasswordBtn.disabled = true;
-            changePasswordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Değiştiriliyor...';
-
-            try {
-                const loggedInUser = localStorage.getItem('loggedInUser');
-                const userId = localStorage.getItem('userId');
-
-                if (!loggedInUser || !userId) {
-                    throw new Error('Oturum bilgisi bulunamadı');
-                }
-
-                // Kullanıcıyı Supabase'den çek
-                const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId, {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_KEY,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!getUserResponse.ok) {
-                    throw new Error('Kullanıcı bilgisi alınamadı');
-                }
-
-                const users = await getUserResponse.json();
-
-                if (users.length === 0) {
-                    throw new Error('Kullanıcı bulunamadı');
-                }
-
-                const user = users[0];
-
-                // Mevcut şifre kontrolü
-                if (user.Pass !== currentPassword) {
-                    showPasswordError('Mevcut şifre yanlış!');
-                    changePasswordBtn.disabled = false;
-                    changePasswordBtn.innerHTML = '<i class="fas fa-save"></i> Şifreyi Değiştir';
-                    return;
-                }
-
-                // Şifreyi güncelle
-                const updateResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId, {
-                    method: 'PATCH',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_KEY,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify({
-                        Pass: newPassword
-                    })
-                });
-
-                if (!updateResponse.ok) {
-                    throw new Error('Şifre güncellenemedi');
-                }
-
-                console.log('Şifre başarıyla değiştirildi');
-
-                // Başarı mesajı
-                showPasswordSuccess('Şifre başarıyla değiştirildi!');
-                changePasswordBtn.innerHTML = '<i class="fas fa-check-circle"></i> Değiştirildi!';
-                changePasswordBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
-
-                // Formu temizle ve popup'ı kapat
-                setTimeout(function() {
-                    closeChangePasswordPopup();
-                    changePasswordBtn.disabled = false;
-                    changePasswordBtn.innerHTML = '<i class="fas fa-save"></i> Şifreyi Değiştir';
-                    changePasswordBtn.style.background = '';
-                }, 2000);
-
-            } catch (error) {
-                console.error('Şifre değiştirme hatası:', error);
-                showPasswordError('Bir hata oluştu: ' + error.message);
-                changePasswordBtn.disabled = false;
-                changePasswordBtn.innerHTML = '<i class="fas fa-save"></i> Şifreyi Değiştir';
-            }
-        });
+window.addEventListener('click', function(event) {
+    if (event.target === document.getElementById('detailPopup')) {
+        document.getElementById('detailPopup').style.display = 'none';
     }
 });
+
+// Şifre değiştirme popup'ını aç
+document.getElementById('changePasswordBtn').addEventListener('click', function() {
+    document.getElementById('changePasswordModal').style.display = 'flex';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+});
+
+// Şifre değiştirme popup'ını kapat
+document.getElementById('closePasswordModal').addEventListener('click', function() {
+    document.getElementById('changePasswordModal').style.display = 'none';
+});
+
+window.addEventListener('click', function(event) {
+    if (event.target === document.getElementById('changePasswordModal')) {
+        document.getElementById('changePasswordModal').style.display = 'none';
+    }
+});
+
+// Şifre değiştirme formunu işle
+document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    var newPassword = document.getElementById('newPassword').value;
+    var confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // Şifrelerin eşleşip eşleşmediğini kontrol et
+    if (newPassword !== confirmPassword) {
+        alert('Şifreler eşleşmiyor!');
+        return;
+    }
+    
+    // Minimum şifre uzunluğu kontrolü
+    if (newPassword.length < 4) {
+        alert('Şifre en az 4 karakter olmalıdır!');
+        return;
+    }
+    
+    try {
+        // Kullanıcı adını span'dan al
+        var currentUserName = document.getElementById('currentUserName').textContent.trim();
+        
+        if (!currentUserName) {
+            throw new Error('Kullanıcı adı bulunamadı');
+        }
+        
+        console.log('Şifre değiştiriliyor:', currentUserName);
+        
+        // Kullanıcıyı m_users tablosundan bul (Kullanici sütununa göre)
+        var userResponse = await fetch(
+            SUPABASE_URL + '/rest/v1/m_users?Kullanici=eq.' + encodeURIComponent(currentUserName),
+            {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        if (!userResponse.ok) {
+            throw new Error('Kullanıcı bilgisi alınamadı');
+        }
+        
+        var users = await userResponse.json();
+        
+        if (!users || users.length === 0) {
+            throw new Error('Kullanıcı bulunamadı');
+        }
+        
+        var userId = users[0].id;
+        
+        // Şifreyi güncelle
+        var updateResponse = await fetch(
+            SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId,
+            {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    Pass: newPassword
+                })
+            }
+        );
+        
+        if (!updateResponse.ok) {
+            throw new Error('Şifre güncellenemedi');
+        }
+        
+        alert('Şifreniz başarıyla değiştirildi!');
+        document.getElementById('changePasswordModal').style.display = 'none';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+    } catch (error) {
+        console.error('Şifre değiştirme hatası:', error);
+        alert('Şifre değiştirme sırasında bir hata oluştu: ' + error.message);
+    }
+});
+
+// Initialize
+fetchDataFromSupabase();
