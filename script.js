@@ -69,6 +69,9 @@ async function fetchDataFromSupabase() {
         // Toplam Kayıt = md_data'daki TÜM kayıtlar
         document.getElementById('totalCount').textContent = busData.length;
 
+        // Otobüs istatistiklerini hesapla
+        calculateBusStats(busData);
+
         applyFilters();
 
         console.log('Toplam kayit yuklendi:', busData.length);
