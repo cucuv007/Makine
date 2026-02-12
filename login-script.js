@@ -90,6 +90,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         // Kullanıcı bilgisini sessionStorage'a kaydet (Tarayıcı kapanınca silinir)
         sessionStorage.setItem('loggedInUser', user.Kullanıcı);
         sessionStorage.setItem('userId', user.id);
+        sessionStorage.setItem('session_valid', 'true'); // Sayfa yenileme kontrolü için
 
         // Başarı animasyonu
         loginBtn.innerHTML = '<i class="fas fa-check-circle"></i> Giriş Başarılı!';
