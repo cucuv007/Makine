@@ -555,19 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         'Content-Type': 'application/json'
                     }
                 });
-                // ... (rest of the code similar but using sessionStorage)
-                // I need to be careful with the chunk size. I will target the specific blocks.
 
-
-                // Kullanıcıyı Supabase'den çek - Kullanıcı adına göre
-                const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?Kullanıcı=eq.' + loggedInUser, {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_KEY,
-                        'Content-Type': 'application/json'
-                    }
-                });
 
                 if (!getUserResponse.ok) {
                     throw new Error('Kullanıcı bilgisi alınamadı');
