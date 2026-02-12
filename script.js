@@ -181,6 +181,9 @@ function applyFilters() {
 
     console.log('Filtrelenmis veri sayisi:', filteredData.length);
     renderTable(filteredData);
+
+    // Filtrelenen verilere göre istatistikleri güncelle
+    calculateBusStats(filteredData);
 }
 
 // Tablo render fonksiyonu - TEK TIKLAMA
