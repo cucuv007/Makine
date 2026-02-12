@@ -116,9 +116,9 @@ function applyFilters() {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
 
-    console.log('Filtreler:', {seriNo: seriNo, plaka: plaka, ariza: ariza, startDate: startDate, endDate: endDate, statusFilter: currentStatusFilter});
+    console.log('Filtreler:', { seriNo: seriNo, plaka: plaka, ariza: ariza, startDate: startDate, endDate: endDate, statusFilter: currentStatusFilter });
 
-    filteredData = busData.filter(function(item) {
+    filteredData = busData.filter(function (item) {
         // Seri No filtresi - En az 3 karakter
         let seriNoMatch = true;
         if (seriNo.length >= 3) {
@@ -188,7 +188,7 @@ function renderTable(data) {
     // Limit uygula - HER BUTON BAĞIMSIZ
     const limitedData = currentLimit === 'all' ? data : data.slice(0, currentLimit);
 
-    tbody.innerHTML = limitedData.map(function(item) {
+    tbody.innerHTML = limitedData.map(function (item) {
         const statusClass = getStatusClass(item.Arıza_Durumu);
         const recordId = item.id || '';
         return '<tr onclick="showRecordDetails(' + recordId + ')" style="cursor: pointer;">' +
@@ -203,7 +203,7 @@ function renderTable(data) {
             '<td>' + formatDate(item.Çıkış_Tarihi) + '</td>' +
             '<td>' + formatTime(item.Çıkış_Saati) + '</td>' +
             '<td><span class="status-badge ' + statusClass + '">' + (item.Arıza_Durumu || '-') + '</span></td>' +
-        '</tr>';
+            '</tr>';
     }).join('');
 
     // Gösterilen = Filtrelenmiş kayıtlar (limit uygulanmış)
@@ -216,7 +216,7 @@ function showRecordDetails(recordId) {
     console.log('Kayit detaylari aciliyor - ID:', recordId);
 
     // ID'ye göre kaydı bul
-    const record = busData.find(function(item) {
+    const record = busData.find(function (item) {
         return item.id === recordId;
     });
 
@@ -228,9 +228,9 @@ function showRecordDetails(recordId) {
     const plaka = record.Plaka;
 
     // Plakaya ait tüm kayıtları bul (Giriş_Tarihi'ne göre sıralı)
-    const plateRecords = busData.filter(function(item) {
+    const plateRecords = busData.filter(function (item) {
         return item.Plaka === plaka;
-    }).sort(function(a, b) {
+    }).sort(function (a, b) {
         const dateA = new Date(a.Giriş_Tarihi || '1900-01-01');
         const dateB = new Date(b.Giriş_Tarihi || '1900-01-01');
         return dateB - dateA; // Yeniden eskiye
@@ -263,7 +263,7 @@ function showRecordDetails(recordId) {
 
     // 6. Toplam Bakımda Bekleme Süresi = Tamamlanan bakımlar + Şu anki arıza süresi
     let totalDays = 0;
-    plateRecords.forEach(function(record) {
+    plateRecords.forEach(function (record) {
         if (record.Giriş_Tarihi && record.Çıkış_Tarihi) {
             // Tamamlanmış bakımlar
             const entry = new Date(record.Giriş_Tarihi);
@@ -281,33 +281,33 @@ function showRecordDetails(recordId) {
     const popupContent = '<div class="popup-header">' +
         '<h2>' + plaka + '</h2>' +
         '<button class="popup-close" onclick="closePopup()"><i class="fas fa-times"></i></button>' +
-    '</div>' +
-    '<div class="popup-body">' +
+        '</div>' +
+        '<div class="popup-body">' +
         '<div class="popup-item">' +
-            '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
-            '<span class="popup-value">' + daysInRepair + '</span>' +
+        '<span class="popup-label"><strong><em>Kaç Gündür Arızalı:</em></strong></span>' +
+        '<span class="popup-value">' + daysInRepair + '</span>' +
         '</div>' +
         '<div class="popup-item">' +
-            '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
-            '<span class="popup-value">' + lastEntry + '</span>' +
+        '<span class="popup-label">En Son Ne Zaman Bakıma Girdi:</span>' +
+        '<span class="popup-value">' + lastEntry + '</span>' +
         '</div>' +
         '<div class="popup-item">' +
-            '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
-            '<span class="popup-value">' + lastExit + '</span>' +
+        '<span class="popup-label">En Son Çıkış Tarihi:</span>' +
+        '<span class="popup-value">' + lastExit + '</span>' +
         '</div>' +
         '<div class="popup-item">' +
-            '<span class="popup-label">En Son Arızası:</span>' +
-            '<span class="popup-value">' + lastFault + '</span>' +
+        '<span class="popup-label">En Son Arızası:</span>' +
+        '<span class="popup-value">' + lastFault + '</span>' +
         '</div>' +
         '<div class="popup-item">' +
-            '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
-            '<span class="popup-value">' + repairCount + ' Kez</span>' +
+        '<span class="popup-label">Kaç Kere Bakıma Geldi:</span>' +
+        '<span class="popup-value">' + repairCount + ' Kez</span>' +
         '</div>' +
         '<div class="popup-item">' +
-            '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
-            '<span class="popup-value">' + totalDays + ' Gün</span>' +
+        '<span class="popup-label">Toplam Bakımda Bekleme Süresi:</span>' +
+        '<span class="popup-value">' + totalDays + ' Gün</span>' +
         '</div>' +
-    '</div>';
+        '</div>';
 
     document.getElementById('popupContent').innerHTML = popupContent;
     document.getElementById('platePopup').style.display = 'flex';
@@ -350,7 +350,7 @@ function setStatusFilter(status) {
 // Limit butonlarini guncelle
 function updateLimitButtons() {
     // Tum butonlari pasif yap
-    document.querySelectorAll('.limit-btn').forEach(function(btn) {
+    document.querySelectorAll('.limit-btn').forEach(function (btn) {
         btn.classList.remove('active');
     });
 
@@ -415,7 +415,7 @@ function showPasswordError(message) {
     errorDiv.textContent = message;
     errorDiv.classList.add('show');
 
-    setTimeout(function() {
+    setTimeout(function () {
         errorDiv.classList.remove('show');
     }, 4000);
 }
@@ -426,12 +426,12 @@ function showPasswordSuccess(message) {
     successDiv.textContent = message;
     successDiv.classList.add('show');
 
-    setTimeout(function() {
+    setTimeout(function () {
         successDiv.classList.remove('show');
     }, 4000);
 }
 // Sayfa yuklendiginde
-window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function () {
     console.log('Sayfa yuklendi');
 
     // Login kontrolü
@@ -455,19 +455,19 @@ window.addEventListener('DOMContentLoaded', function() {
     fetchDataFromSupabase();
 
     // Gercek zamanli arama - En az 3 karakter
-    document.getElementById('searchSeriNo').addEventListener('input', function() {
+    document.getElementById('searchSeriNo').addEventListener('input', function () {
         if (this.value.length === 0 || this.value.length >= 3) {
             applyFilters();
         }
     });
 
-    document.getElementById('searchPlaka').addEventListener('input', function() {
+    document.getElementById('searchPlaka').addEventListener('input', function () {
         if (this.value.length === 0 || this.value.length >= 3) {
             applyFilters();
         }
     });
 
-    document.getElementById('searchAriza').addEventListener('input', function() {
+    document.getElementById('searchAriza').addEventListener('input', function () {
         if (this.value.length === 0 || this.value.length >= 3) {
             applyFilters();
         }
@@ -481,14 +481,14 @@ window.addEventListener('DOMContentLoaded', function() {
     updateLimitButtons();
 
     // Popup dışına tıklanınca kapat
-    document.getElementById('platePopup').addEventListener('click', function(e) {
+    document.getElementById('platePopup').addEventListener('click', function (e) {
         if (e.target.id === 'platePopup') {
             closePopup();
         }
     });
 
     // Şifre değiştirme popup dışına tıklanınca kapat
-    document.getElementById('changePasswordPopup').addEventListener('click', function(e) {
+    document.getElementById('changePasswordPopup').addEventListener('click', function (e) {
         if (e.target.id === 'changePasswordPopup') {
             closeChangePasswordPopup();
         }
@@ -496,11 +496,11 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 // Şifre değiştirme form submit
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const changePasswordForm = document.getElementById('changePasswordForm');
 
     if (changePasswordForm) {
-        changePasswordForm.addEventListener('submit', async function(e) {
+        changePasswordForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const currentPassword = document.getElementById('currentPassword').value;
@@ -585,7 +585,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 if (!updateResponse.ok) {
-                    throw new Error('Şifre güncellenemedi');
+                    const errorDetails = await updateResponse.text();
+                    console.error('Supabase Update Error:', updateResponse.status, errorDetails);
+                    throw new Error('Şifre güncellenemedi: ' + updateResponse.status + ' - ' + errorDetails);
                 }
 
                 console.log('Şifre başarıyla değiştirildi');
@@ -596,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 changePasswordBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
 
                 // Formu temizle ve popup'ı kapat
-                setTimeout(function() {
+                setTimeout(function () {
                     closeChangePasswordPopup();
                     changePasswordBtn.disabled = false;
                     changePasswordBtn.innerHTML = '<i class="fas fa-save"></i> Şifreyi Değiştir';
