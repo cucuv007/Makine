@@ -9,20 +9,19 @@ let currentStatusFilter = 'all';
 
 // Login kontrolü - Sayfa yüklendiğinde
 function checkLogin() {
-    // Sayfa yenilenmişse (F5) oturumu kapat
-    if (performance.navigation.type === 1) {
+    const sessionValid = sessionStorage.getItem('session_valid');
+    const loggedInUser = sessionStorage.getItem('loggedInUser');
+
+    // Eğer session_valid tokenı yoksa veya kullanıcı adı yoksa
+    if (!sessionValid || !loggedInUser) {
         sessionStorage.clear();
         window.location.href = 'login.html';
         return false;
     }
 
-    const loggedInUser = sessionStorage.getItem('loggedInUser');
-
-    if (!loggedInUser) {
-        // Login yapılmamışsa login.html'e yönlendir
-        window.location.href = 'login.html';
-        return false;
-    }
+    // Token varsa, bu sayfa yüklemesi için kullanıldı.
+    // Yenileme (Refresh) durumunda tekrar kullanılmaması için siliyoruz.
+    sessionStorage.removeItem('session_valid');
 
     // Kullanıcı adını göster
     document.getElementById('loggedUsername').textContent = loggedInUser;
