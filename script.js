@@ -9,7 +9,14 @@ let currentStatusFilter = 'all';
 
 // Login kontrolü - Sayfa yüklendiğinde
 function checkLogin() {
-    const loggedInUser = localStorage.getItem('loggedInUser');
+    // Sayfa yenilenmişse (F5) oturumu kapat
+    if (performance.navigation.type === 1) {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    const loggedInUser = sessionStorage.getItem('loggedInUser');
 
     if (!loggedInUser) {
         // Login yapılmamışsa login.html'e yönlendir
@@ -529,15 +536,28 @@ document.addEventListener('DOMContentLoaded', function () {
             changePasswordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Değiştiriliyor...';
 
             try {
-                const loggedInUser = localStorage.getItem('loggedInUser');
+                const loggedInUser = sessionStorage.getItem('loggedInUser');
                 // userId artık gerekli değil çünkü kullanıcı adına göre işlem yapacağız
-                // const userId = localStorage.getItem('userId');
+                // const userId = sessionStorage.getItem('userId');
 
                 if (!loggedInUser) {
                     throw new Error('Oturum bilgisi bulunamadı');
                 }
 
                 console.log('Şifre değiştirme işlemi başlatıldı. Kullanıcı:', loggedInUser);
+
+                // Kullanıcıyı Supabase'den çek - Kullanıcı adına göre
+                const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?Kullanıcı=eq.' + loggedInUser, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                // ... (rest of the code similar but using sessionStorage)
+                // I need to be careful with the chunk size. I will target the specific blocks.
+
 
                 // Kullanıcıyı Supabase'den çek - Kullanıcı adına göre
                 const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?Kullanıcı=eq.' + loggedInUser, {
@@ -619,8 +639,8 @@ document.addEventListener('DOMContentLoaded', function () {
 // Çıkış Yapma Fonksiyonu
 function logout() {
     if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
-        localStorage.removeItem('loggedInUser');
-        localStorage.removeItem('userId');
+        sessionStorage.removeItem('loggedInUser');
+        sessionStorage.removeItem('userId');
         window.location.href = 'login.html';
     }
 }
