@@ -202,6 +202,7 @@ function renderTable(data) {
             '<td><strong>' + (item.id || '-') + '</strong></td>' +
             '<td><strong>' + (item.Seri_No || '-') + '</strong></td>' +
             '<td>' + (item.Plaka || '-') + '</td>' +
+            '<td>' + (item.Tip || '-') + '</td>' +
             '<td>' + formatDate(item.Giriş_Tarihi) + '</td>' +
             '<td>' + formatTime(item.Giriş_Saati) + '</td>' +
             '<td>' + (item.Arıza || '-') + '</td>' +
