@@ -122,6 +122,32 @@ body {
 
 .change-password-btn i {
     font-size: 12px;
+    color: white; /* İkon rengini beyaz yap */
+}
+
+.logout-btn {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    margin-left: 5px;
+}
+
+.logout-btn:hover {
+    background: #DC2626;
+    transform: scale(1.1);
+}
+
+.logout-btn i {
+    font-size: 12px;
+    color: white;
 }
 
 .theme-toggle {
