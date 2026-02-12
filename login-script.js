@@ -22,13 +22,13 @@ function showError(message) {
     errorDiv.textContent = message;
     errorDiv.classList.add('show');
 
-    setTimeout(function() {
+    setTimeout(function () {
         errorDiv.classList.remove('show');
     }, 4000);
 }
 
 // Login form submit
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const username = document.getElementById('username').value.trim();
@@ -65,7 +65,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         console.log('Kullanıcılar yüklendi:', users.length);
 
         // Kullanıcı adını büyük küçük harf duyarsız ara
-        const user = users.find(function(u) {
+        const user = users.find(function (u) {
             return u.Kullanıcı && u.Kullanıcı.toLowerCase() === username.toLowerCase();
         });
 
@@ -87,16 +87,16 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         // Başarılı giriş
         console.log('Giriş başarılı:', user.Kullanıcı);
 
-        // Kullanıcı bilgisini localStorage'a kaydet
-        localStorage.setItem('loggedInUser', user.Kullanıcı);
-        localStorage.setItem('userId', user.id);
+        // Kullanıcı bilgisini sessionStorage'a kaydet (Tarayıcı kapanınca silinir)
+        sessionStorage.setItem('loggedInUser', user.Kullanıcı);
+        sessionStorage.setItem('userId', user.id);
 
         // Başarı animasyonu
         loginBtn.innerHTML = '<i class="fas fa-check-circle"></i> Giriş Başarılı!';
         loginBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
 
         // index.html'e yönlendir
-        setTimeout(function() {
+        setTimeout(function () {
             window.location.href = 'index.html';
         }, 1000);
 
@@ -109,7 +109,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 });
 
 // Enter tuşu ile form submit
-document.getElementById('password').addEventListener('keypress', function(e) {
+document.getElementById('password').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
         document.getElementById('loginForm').dispatchEvent(new Event('submit'));
     }
