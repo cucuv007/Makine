@@ -478,16 +478,12 @@ window.addEventListener('DOMContentLoaded', function () {
     document.documentElement.setAttribute('data-theme', savedTheme);
 
     const icon = document.getElementById('theme-icon');
-    const text = document.getElementById('theme-text');
 
     if (savedTheme === 'dark') {
         icon.className = 'fas fa-sun';
-        text.textContent = 'Aydinlik Mod';
+    } else {
+        icon.className = 'fas fa-moon';
     }
-
-    // Supabase'den veri cek
-    fetchDataFromSupabase();
-
     // Gercek zamanli arama - En az 3 karakter
     document.getElementById('searchSeriNo').addEventListener('input', function () {
         if (this.value.length === 0 || this.value.length >= 3) {
