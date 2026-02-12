@@ -530,14 +530,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 const loggedInUser = localStorage.getItem('loggedInUser');
-                const userId = localStorage.getItem('userId');
+                // userId artık gerekli değil çünkü kullanıcı adına göre işlem yapacağız
+                // const userId = localStorage.getItem('userId');
 
-                if (!loggedInUser || !userId) {
+                if (!loggedInUser) {
                     throw new Error('Oturum bilgisi bulunamadı');
                 }
 
-                // Kullanıcıyı Supabase'den çek
-                const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId, {
+                console.log('Şifre değiştirme işlemi başlatıldı. Kullanıcı:', loggedInUser);
+
+                // Kullanıcıyı Supabase'den çek - Kullanıcı adına göre
+                const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?Kullanıcı=eq.' + loggedInUser, {
                     method: 'GET',
                     headers: {
                         'apikey': SUPABASE_KEY,
@@ -557,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 const user = users[0];
+                const userId = user.id; // ID'yi veritabanından aldık
 
                 // Mevcut şifre kontrolü
                 if (user.Pass !== currentPassword) {
@@ -566,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                // Şifreyi güncelle
+                // Şifreyi güncelle - ID'ye göre güncelleme yapıyoruz (en güvenlisi)
                 const updateResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId, {
                     method: 'PATCH',
                     headers: {
@@ -608,3 +612,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Çıkış Yapma Fonksiyonu
+function logout() {
+    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+        localStorage.removeItem('loggedInUser');
+        localStorage.removeItem('userId');
+        window.location.href = 'login.html';
+    }
+}
