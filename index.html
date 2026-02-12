@@ -29,11 +29,27 @@
                                 <i class="fas fa-sign-out-alt"></i>
                             </button>
                         </div>
+
+                        <!-- Mini Bus Stats -->
+                        <div class="mini-stats">
+                            <div class="stat-badge 12m">
+                                <i class="fas fa-bus"></i>
+                                <span>12M: <strong id="count-12m">0</strong></span>
+                            </div>
+                            <div class="stat-badge 9m">
+                                <i class="fas fa-bus"></i>
+                                <span>9M: <strong id="count-9m">0</strong></span>
+                            </div>
+                            <div class="stat-badge 5m">
+                                <i class="fas fa-shuttle-van"></i>
+                                <span>5M: <strong id="count-5m">0</strong></span>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-                <button class="theme-toggle" onclick="toggleTheme()">
+                <button class="theme-toggle icon-only" onclick="toggleTheme()" title="Tema Değiştir">
                     <i class="fas fa-moon" id="theme-icon"></i>
-                    <span id="theme-text">Karanlık Mod</span>
                 </button>
             </div>
         </div>
