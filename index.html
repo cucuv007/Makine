@@ -195,7 +195,8 @@
                             <i class="fas fa-lock"></i>
                             Mevcut Şifre
                         </label>
-                        <input type="password" id="currentPassword" placeholder="Mevcut şifrenizi girin" required>
+                        <input type="password" id="currentPassword" placeholder="Mevcut şifrenizi girin" required
+                            autocomplete="current-password">
                     </div>
 
                     <div class="form-group">
@@ -203,7 +204,8 @@
                             <i class="fas fa-key"></i>
                             Yeni Şifre
                         </label>
-                        <input type="password" id="newPassword" placeholder="Yeni şifrenizi girin" required>
+                        <input type="password" id="newPassword" placeholder="Yeni şifrenizi girin" required
+                            autocomplete="new-password">
                     </div>
 
                     <div class="form-group">
@@ -211,7 +213,8 @@
                             <i class="fas fa-check-circle"></i>
                             Yeni Şifre (Tekrar)
                         </label>
-                        <input type="password" id="confirmPassword" placeholder="Yeni şifrenizi tekrar girin" required>
+                        <input type="password" id="confirmPassword" placeholder="Yeni şifrenizi tekrar girin" required
+                            autocomplete="new-password">
                     </div>
 
                     <div id="passwordError" class="error-message"></div>
@@ -224,4 +227,9 @@
                 </form>
             </div>
         </div>
-    </d
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
