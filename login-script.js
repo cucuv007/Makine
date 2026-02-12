@@ -1,85 +1,116 @@
 // Supabase Configuration
-var SUPABASE_URL = 'https://yfiulwcqyxgvpiefxgph.supabase.co';
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmaXVsd2NxeXhndnBpZWZ4Z3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5NzY3NzIsImV4cCI6MjA1MzU1Mjc3Mn0.5_2ypx7vZEKYOt-2hqxqJqxWJYqxqJqxqJqxqJqxqJo';
+const SUPABASE_URL = 'https://yfiulwcqyxgvpiefxgph.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmaXVsd2NxeXhndnBpZWZ4Z3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MDMwMzgsImV4cCI6MjA4NjM3OTAzOH0.GlE4Q71Ja_vfDKhBF4j9pEFIIVnkaM8rPrmdRnibmmg';
 
-// Toggle Password Visibility
+// Şifre göster/gizle
 function togglePassword() {
-    var passwordInput = document.getElementById('password');
-    var toggleIcon = document.getElementById('toggleIcon');
-    
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
+        toggleIcon.className = 'fas fa-eye-slash';
     } else {
         passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
+        toggleIcon.className = 'fas fa-eye';
     }
 }
 
-// Login Form Submit
+// Hata mesajı göster
+function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+
+    setTimeout(function() {
+        errorDiv.classList.remove('show');
+    }, 4000);
+}
+
+// Login form submit
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    
-    var username = document.getElementById('username').value.trim();
-    var password = document.getElementById('password').value;
-    var errorMessage = document.getElementById('errorMessage');
-    var loginBtn = document.getElementById('loginBtn');
-    
-    // Clear previous error
-    errorMessage.classList.remove('show');
-    errorMessage.textContent = '';
-    
-    // Disable button
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (!username || !password) {
+        showError('Lütfen tüm alanları doldurun!');
+        return;
+    }
+
+    // Butonu devre dışı bırak
     loginBtn.disabled = true;
     loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş yapılıyor...';
-    
+
     try {
-        // Fetch user from Supabase (case-insensitive username)
-        var response = await fetch(
-            SUPABASE_URL + '/rest/v1/m_users?select=*',
-            {
-                method: 'GET',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-                    'Content-Type': 'application/json'
-                }
+        console.log('Login denemesi:', username);
+
+        // Supabase'den kullanıcı sorgula - BÜYÜK KÜÇÜK HARF DUYARSIZ
+        const response = await fetch(SUPABASE_URL + '/rest/v1/m_users?select=*', {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json'
             }
-        );
-        
-        if (!response.ok) {
-            throw new Error('Sunucuya bağlanılamadı');
-        }
-        
-        var users = await response.json();
-        
-        // Find user (case-insensitive)
-        var user = users.find(function(u) {
-            return u.Kullanici && u.Kullanici.toLowerCase() === username.toLowerCase();
         });
-        
+
+        if (!response.ok) {
+            throw new Error('Veritabanı bağlantı hatası');
+        }
+
+        const users = await response.json();
+        console.log('Kullanıcılar yüklendi:', users.length);
+
+        // Kullanıcı adını büyük küçük harf duyarsız ara
+        const user = users.find(function(u) {
+            return u.Kullanıcı && u.Kullanıcı.toLowerCase() === username.toLowerCase();
+        });
+
         if (!user) {
-            throw new Error('Kullanıcı adı bulunamadı');
+            showError('Kullanıcı adı bulunamadı!');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Giriş Yap';
+            return;
         }
-        
-        // Check password
+
+        // Şifre kontrolü
         if (user.Pass !== password) {
-            throw new Error('Şifre hatalı');
+            showError('Şifre yanlış!');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Giriş Yap';
+            return;
         }
-        
-        // Login successful
-        localStorage.setItem('loggedInUser', user.Kullanici);
-        window.location.href = 'index.html';
-        
+
+        // Başarılı giriş
+        console.log('Giriş başarılı:', user.Kullanıcı);
+
+        // Kullanıcı bilgisini localStorage'a kaydet
+        localStorage.setItem('loggedInUser', user.Kullanıcı);
+        localStorage.setItem('userId', user.id);
+
+        // Başarı animasyonu
+        loginBtn.innerHTML = '<i class="fas fa-check-circle"></i> Giriş Başarılı!';
+        loginBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+
+        // index.html'e yönlendir
+        setTimeout(function() {
+            window.location.href = 'index.html';
+        }, 1000);
+
     } catch (error) {
-        console.error('Login error:', error);
-        errorMessage.textContent = error.message;
-        errorMessage.classList.add('show');
-        
-        // Re-enable button
+        console.error('Login hatası:', error);
+        showError('Bir hata oluştu: ' + error.message);
         loginBtn.disabled = false;
         loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Giriş Yap';
+    }
+});
+
+// Enter tuşu ile form submit
+document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
     }
 });
