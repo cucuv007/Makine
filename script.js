@@ -69,6 +69,9 @@ async function fetchDataFromSupabase() {
         // Toplam Kayıt = md_data'daki TÜM kayıtlar
         document.getElementById('totalCount').textContent = busData.length;
 
+        // İstatistikleri hesapla
+        calculateBusStats(busData);
+
         applyFilters();
 
         console.log('Toplam kayit yuklendi:', busData.length);
@@ -388,17 +391,41 @@ function toggleTheme() {
     html.setAttribute('data-theme', newTheme);
 
     const icon = document.getElementById('theme-icon');
-    const text = document.getElementById('theme-text');
+
+    // text element removed
 
     if (newTheme === 'dark') {
         icon.className = 'fas fa-sun';
-        text.textContent = 'Aydinlik Mod';
     } else {
         icon.className = 'fas fa-moon';
-        text.textContent = 'Karanlik Mod';
     }
 
     localStorage.setItem('theme', newTheme);
+}
+
+// Otobüs Tiplerine Göre Arıza İstatistikleri
+function calculateBusStats(data) {
+    let count12m = 0;
+    let count9m = 0;
+    let count5m = 0;
+
+    data.forEach(function (item) {
+        // Arıza durumu kontrolü
+        const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
+        // Yapıldı değilse arızalı kabul et
+        const isBroken = durum !== 'yapildi' && durum !== 'yapıldı' && durum !== 'yapilmis' && durum !== 'yapılmış';
+
+        if (isBroken) {
+            const tip = item.Tip ? item.Tip.toString().toUpperCase().trim() : '';
+            if (tip === '12M') count12m++;
+            else if (tip === '9M') count9m++;
+            else if (tip === '5M') count5m++;
+        }
+    });
+
+    document.getElementById('count-12m').textContent = count12m;
+    document.getElementById('count-9m').textContent = count9m;
+    document.getElementById('count-5m').textContent = count5m;
 }
 
 // Şifre değiştirme popup aç
