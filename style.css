@@ -122,8 +122,7 @@ body {
 
 .change-password-btn i {
     font-size: 12px;
-    color: white;
-    /* İkon rengini beyaz yap */
+    color: white; /* İkon rengini beyaz yap */
 }
 
 .logout-btn {
@@ -154,15 +153,14 @@ body {
 .theme-toggle {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
+    gap: 8px;
+    padding: 10px 20px;
     background: var(--bg-primary);
     border: 2px solid var(--border-color);
-    border-radius: 50%;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--text-primary);
     transition: all 0.3s ease;
 }
@@ -171,7 +169,89 @@ body {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
-    transform: rotate(30deg);
+}
+
+/* Search Section */
+.search-section {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-md);
+}
+
+.search-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.search-field label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.search-field input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.search-field input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.search-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+    transform: translateY(-2px);
 }
 
 /* Stats */
@@ -202,67 +282,21 @@ body {
     color: var(--primary-color);
 }
 
-/* Bus Stats */
-.bus-stats {
-    display: flex;
-    /* Grid yerine Flex kullanıp yan yana dizeceğiz, ama stats class'ı grid veriyor, onu ezeceğiz */
-    justify-content: center;
-    /* Ortala */
-    gap: 30px;
-    margin-bottom: 30px;
-}
-
-.bus-stat-card {
-    background: var(--bg-secondary);
-    border-radius: 16px;
-    padding: 15px 25px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--border-color);
-    min-width: 160px;
-}
-
-.bus-icon-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(79, 70, 229, 0.1);
-    color: var(--primary-color);
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-}
-
-.bus-icon-wrapper i {
-    font-size: 20px;
-}
-
-.bus-type {
-    font-size: 10px;
-    font-weight: 800;
-    margin-top: 2px;
-}
-
 .stat-info {
     display: flex;
     flex-direction: column;
 }
 
 .stat-label {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
+    font-weight: 500;
 }
 
 .stat-value {
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--accent-red);
-    /* Arızalı sayısı olduğu için kırmızı olsun */
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 /* Table */
@@ -444,13 +478,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .popup-container {
@@ -469,7 +498,6 @@ body {
         transform: translateY(50px);
         opacity: 0;
     }
-
     to {
         transform: translateY(0);
         opacity: 1;
@@ -599,19 +627,9 @@ body {
 }
 
 @keyframes shake {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    25% {
-        transform: translateX(-10px);
-    }
-
-    75% {
-        transform: translateX(10px);
-    }
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
 }
 
 .success-message {
