@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 const user = users[0];
-                const userId = user.id; // ID'yi veritabanından aldık
+                // id kolonu yokmuş, o yüzden Kullanıcı adını kullanacağız
 
                 // Mevcut şifre kontrolü
                 if (user.Pass !== currentPassword) {
@@ -570,8 +570,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                // Şifreyi güncelle - ID'ye göre güncelleme yapıyoruz (en güvenlisi)
-                const updateResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?id=eq.' + userId, {
+                // Şifreyi güncelle - Kullanıcı adına göre güncelleme yapıyoruz
+                // EncodeURIComponent kullanarak özel karakter sorunlarını engelliyoruz
+                const updateResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?Kullanıcı=eq.' + encodeURIComponent(user.Kullanıcı), {
                     method: 'PATCH',
                     headers: {
                         'apikey': SUPABASE_KEY,
