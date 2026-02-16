@@ -1,6 +1,6 @@
 // Supabase Configuration
-const SUPABASE_URL = 'https://yfiulwcqyxgvpiefxgph.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmaXVsd2NxeXhndnBpZWZ4Z3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MDMwMzgsImV4cCI6MjA4NjM3OTAzOH0.GlE4Q71Ja_vfDKhBF4j9pEFIIVnkaM8rPrmdRnibmmg';
+// Supabase Configuration
+// Config.js dosyasindan alinir
 
 let busData = [];
 let filteredData = [];
