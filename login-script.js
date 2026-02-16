@@ -1,8 +1,4 @@
-// Supabase Configuration
-// Supabase Configuration
-// Config.js dosyasindan alinir
 
-// Şifre göster/gizle
 function togglePassword() {
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.getElementById('toggleIcon');
@@ -16,7 +12,7 @@ function togglePassword() {
     }
 }
 
-// Hata mesajı göster
+
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     errorDiv.textContent = message;
@@ -27,7 +23,6 @@ function showError(message) {
     }, 4000);
 }
 
-// Login form submit
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -40,14 +35,13 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         return;
     }
 
-    // Butonu devre dışı bırak
     loginBtn.disabled = true;
     loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş yapılıyor...';
 
     try {
         console.log('Login denemesi:', username);
 
-        // Supabase'den kullanıcı sorgula - BÜYÜK KÜÇÜK HARF DUYARSIZ
+      
         const response = await fetch(SUPABASE_URL + '/rest/v1/m_users?select=*', {
             method: 'GET',
             headers: {
@@ -64,7 +58,6 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         const users = await response.json();
         console.log('Kullanıcılar yüklendi:', users.length);
 
-        // Kullanıcı adını büyük küçük harf duyarsız ara
         const user = users.find(function (u) {
             return u.Kullanıcı && u.Kullanıcı.toLowerCase() === username.toLowerCase();
         });
@@ -76,7 +69,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             return;
         }
 
-        // Şifre kontrolü
+
         if (user.Pass !== password) {
             showError('Şifre yanlış!');
             loginBtn.disabled = false;
@@ -84,19 +77,17 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             return;
         }
 
-        // Başarılı giriş
+
         console.log('Giriş başarılı:', user.Kullanıcı);
 
-        // Kullanıcı bilgisini sessionStorage'a kaydet (Tarayıcı kapanınca silinir)
+
         sessionStorage.setItem('loggedInUser', user.Kullanıcı);
         sessionStorage.setItem('userId', user.id);
-        sessionStorage.setItem('session_valid', 'true'); // Sayfa yenileme kontrolü için
+        sessionStorage.setItem('session_valid', 'true'); 
 
-        // Başarı animasyonu
         loginBtn.innerHTML = '<i class="fas fa-check-circle"></i> Giriş Başarılı!';
         loginBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
 
-        // index.html'e yönlendir
         setTimeout(function () {
             window.location.href = 'index.html';
         }, 1000);
@@ -109,7 +100,6 @@ document.getElementById('loginForm').addEventListener('submit', async function (
     }
 });
 
-// Enter tuşu ile form submit
 document.getElementById('password').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
         document.getElementById('loginForm').dispatchEvent(new Event('submit'));
