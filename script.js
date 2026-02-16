@@ -1,34 +1,25 @@
-// Supabase Configuration
-// Supabase Configuration
-// Config.js dosyasindan alinir
 
 let busData = [];
 let filteredData = [];
 let currentLimit = 50;
 let currentStatusFilter = 'all';
 
-// Login kontrolü - Sayfa yüklendiğinde
 function checkLogin() {
     const sessionValid = sessionStorage.getItem('session_valid');
     const loggedInUser = sessionStorage.getItem('loggedInUser');
 
-    // Eğer session_valid tokenı yoksa veya kullanıcı adı yoksa
     if (!sessionValid || !loggedInUser) {
         sessionStorage.clear();
         window.location.href = 'login.html';
         return false;
     }
 
-    // Token varsa, bu sayfa yüklemesi için kullanıldı.
-    // Yenileme (Refresh) durumunda tekrar kullanılmaması için siliyoruz.
     sessionStorage.removeItem('session_valid');
 
-    // Kullanıcı adını göster
     document.getElementById('loggedUsername').textContent = loggedInUser;
     return true;
 }
 
-// Supabase'den veri cekme fonksiyonu
 async function fetchDataFromSupabase() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-spinner fa-spin"></i><br>Veriler yukleniyor...</td></tr>';
@@ -66,10 +57,8 @@ async function fetchDataFromSupabase() {
 
         busData = data;
 
-        // Toplam Kayıt = md_data'daki TÜM kayıtlar
         document.getElementById('totalCount').textContent = busData.length;
 
-        // İstatistikleri hesapla
         calculateBusStats(busData);
 
         applyFilters();
@@ -81,7 +70,6 @@ async function fetchDataFromSupabase() {
     }
 }
 
-// Tarih formatlama
 function formatDate(dateStr) {
     if (!dateStr) return '-';
     try {
@@ -92,7 +80,6 @@ function formatDate(dateStr) {
     }
 }
 
-// Saat formatlama
 function formatTime(timeStr) {
     if (!timeStr) return '-';
     try {
@@ -102,22 +89,18 @@ function formatTime(timeStr) {
     }
 }
 
-// Ariza durumuna gore badge class - SADECE YEŞİL VE KIRMIZI
 function getStatusClass(arizaDurumu) {
     if (!arizaDurumu) return 'status-breakdown';
 
     const durum = arizaDurumu.toLowerCase().trim();
 
-    // Yapıldı = Yeşil
     if (durum === 'yapildi' || durum === 'yapıldı' || durum === 'yapilmis' || durum === 'yapılmış') {
         return 'status-active';
     }
 
-    // Arızalı = Kırmızı (default)
     return 'status-breakdown';
 }
 
-// Tüm filtreleri uygula
 function applyFilters() {
     const seriNo = document.getElementById('searchSeriNo').value.trim();
     const plaka = document.getElementById('searchPlaka').value.trim();
@@ -128,25 +111,22 @@ function applyFilters() {
     console.log('Filtreler:', { seriNo: seriNo, plaka: plaka, ariza: ariza, startDate: startDate, endDate: endDate, statusFilter: currentStatusFilter });
 
     filteredData = busData.filter(function (item) {
-        // Seri No filtresi - En az 3 karakter
+
         let seriNoMatch = true;
         if (seriNo.length >= 3) {
             seriNoMatch = item.Seri_No && item.Seri_No.toString().toLowerCase().includes(seriNo.toLowerCase());
         }
-
-        // Plaka filtresi - En az 3 karakter
+  
         let plakaMatch = true;
         if (plaka.length >= 3) {
             plakaMatch = item.Plaka && item.Plaka.toLowerCase().includes(plaka.toLowerCase());
         }
 
-        // Ariza filtresi - En az 3 karakter
         let arizaMatch = true;
         if (ariza.length >= 3) {
             arizaMatch = item.Arıza && item.Arıza.toLowerCase().includes(ariza.toLowerCase());
         }
 
-        // Tarih filtresi
         let dateMatch = true;
         if (startDate || endDate) {
             if (item.Giriş_Tarihi) {
@@ -166,7 +146,6 @@ function applyFilters() {
             }
         }
 
-        // Durum filtresi - BAĞIMSIZ
         let statusMatch = true;
         if (currentStatusFilter === 'arizali') {
             const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
@@ -181,12 +160,9 @@ function applyFilters() {
 
     console.log('Filtrelenmis veri sayisi:', filteredData.length);
     renderTable(filteredData);
-
-    // Filtrelenen verilere göre istatistikleri güncelle
     calculateBusStats(filteredData);
 }
 
-// Tablo render fonksiyonu - TEK TIKLAMA
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
     const displayedCount = document.getElementById('displayedCount');
@@ -197,7 +173,6 @@ function renderTable(data) {
         return;
     }
 
-    // Limit uygula - HER BUTON BAĞIMSIZ
     const limitedData = currentLimit === 'all' ? data : data.slice(0, currentLimit);
 
     tbody.innerHTML = limitedData.map(function (item) {
@@ -219,16 +194,13 @@ function renderTable(data) {
             '</tr>';
     }).join('');
 
-    // Gösterilen = Filtrelenmiş kayıtlar (limit uygulanmış)
     displayedCount.textContent = limitedData.length;
 }
-// ID'ye göre kayıt detaylarını göster - TOPLAM BAKIM SÜRESİ DÜZELTİLDİ
+
 function showRecordDetails(recordId) {
     if (!recordId) return;
 
     console.log('Kayit detaylari aciliyor - ID:', recordId);
-
-    // ID'ye göre kaydı bul
     const record = busData.find(function (item) {
         return item.id === recordId;
     });
@@ -239,19 +211,16 @@ function showRecordDetails(recordId) {
     }
 
     const plaka = record.Plaka;
-
-    // Plakaya ait tüm kayıtları bul (Giriş_Tarihi'ne göre sıralı)
     const plateRecords = busData.filter(function (item) {
         return item.Plaka === plaka;
     }).sort(function (a, b) {
         const dateA = new Date(a.Giriş_Tarihi || '1900-01-01');
         const dateB = new Date(b.Giriş_Tarihi || '1900-01-01');
-        return dateB - dateA; // Yeniden eskiye
+        return dateB - dateA;
     });
 
-    const latestRecord = plateRecords[0]; // En güncel kayıt
+    const latestRecord = plateRecords[0]; 
 
-    // 1. Kaç Gündür Arızalı
     let daysInRepair = 'Araç Arızalı Değil';
     let currentRepairDays = 0;
     if (latestRecord.Giriş_Tarihi && !latestRecord.Çıkış_Tarihi) {
@@ -262,19 +231,11 @@ function showRecordDetails(recordId) {
         daysInRepair = currentRepairDays + ' Gün';
     }
 
-    // 2. En Son Ne Zaman Bakıma Girdi
     const lastEntry = latestRecord.Giriş_Tarihi ? formatDate(latestRecord.Giriş_Tarihi) : '-';
-
-    // 3. En Son Çıkış Tarihi
     const lastExit = latestRecord.Çıkış_Tarihi ? formatDate(latestRecord.Çıkış_Tarihi) : '-';
-
-    // 4. En Son Arızası
     const lastFault = latestRecord.Arıza || '-';
-
-    // 5. Kaç Kere Bakıma Geldi
     const repairCount = plateRecords.length;
 
-    // 6. Toplam Bakımda Bekleme Süresi = Tamamlanan bakımlar + Şu anki arıza süresi
     let totalDays = 0;
     plateRecords.forEach(function (record) {
         if (record.Giriş_Tarihi && record.Çıkış_Tarihi) {
@@ -287,10 +248,8 @@ function showRecordDetails(recordId) {
         }
     });
 
-    // Şu anki arıza süresini de ekle
     totalDays += currentRepairDays;
 
-    // Popup içeriği - SADECE PLAKA İSTATİSTİKLERİ
     const popupContent = '<div class="popup-header">' +
         '<h2>' + plaka + '</h2>' +
         '<button class="popup-close" onclick="closePopup()"><i class="fas fa-times"></i></button>' +
@@ -326,12 +285,10 @@ function showRecordDetails(recordId) {
     document.getElementById('platePopup').style.display = 'flex';
 }
 
-// Popup kapat
 function closePopup() {
     document.getElementById('platePopup').style.display = 'none';
 }
 
-// Filtreleri temizleme
 function clearFilters() {
     document.getElementById('searchSeriNo').value = '';
     document.getElementById('searchPlaka').value = '';
@@ -344,30 +301,25 @@ function clearFilters() {
     applyFilters();
 }
 
-// Limit degistirme - BAĞIMSIZ
 function setLimit(limit) {
     currentLimit = limit;
-    currentStatusFilter = 'all'; // Durum filtresini sıfırla
+    currentStatusFilter = 'all'; 
     updateLimitButtons();
     renderTable(filteredData);
 }
 
-// Durum filtresi - BAĞIMSIZ
 function setStatusFilter(status) {
     currentStatusFilter = status;
-    currentLimit = 'all'; // Limit'i sıfırla, tüm kayıtları göster
+    currentLimit = 'all'; 
     updateLimitButtons();
     applyFilters();
 }
 
-// Limit butonlarini guncelle
 function updateLimitButtons() {
-    // Tum butonlari pasif yap
     document.querySelectorAll('.limit-btn').forEach(function (btn) {
         btn.classList.remove('active');
     });
 
-    // Aktif butonu isle
     if (currentStatusFilter === 'arizali') {
         document.getElementById('btn-arizali').classList.add('active');
     } else if (currentStatusFilter === 'yapilanlar') {
@@ -385,7 +337,6 @@ function updateLimitButtons() {
     }
 }
 
-// Tema degistirme
 function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
@@ -394,9 +345,6 @@ function toggleTheme() {
     html.setAttribute('data-theme', newTheme);
 
     const icon = document.getElementById('theme-icon');
-
-    // text element removed
-
     if (newTheme === 'dark') {
         icon.className = 'fas fa-sun';
     } else {
@@ -406,16 +354,13 @@ function toggleTheme() {
     localStorage.setItem('theme', newTheme);
 }
 
-// Otobüs Tiplerine Göre Arıza İstatistikleri
 function calculateBusStats(data) {
     let count12m = 0;
     let count9m = 0;
     let count5m = 0;
 
     data.forEach(function (item) {
-        // Arıza durumu kontrolü
         const durum = item.Arıza_Durumu ? item.Arıza_Durumu.toLowerCase().trim() : '';
-        // Yapıldı değilse arızalı kabul et
         const isBroken = durum !== 'yapildi' && durum !== 'yapıldı' && durum !== 'yapilmis' && durum !== 'yapılmış';
 
         if (isBroken) {
@@ -431,7 +376,6 @@ function calculateBusStats(data) {
     document.getElementById('count-5m').textContent = count5m;
 }
 
-// Şifre değiştirme popup aç
 function openChangePasswordPopup() {
     document.getElementById('changePasswordPopup').style.display = 'flex';
     document.getElementById('currentPassword').value = '';
@@ -441,12 +385,10 @@ function openChangePasswordPopup() {
     document.getElementById('passwordSuccess').classList.remove('show');
 }
 
-// Şifre değiştirme popup kapat
 function closeChangePasswordPopup() {
     document.getElementById('changePasswordPopup').style.display = 'none';
 }
 
-// Şifre değiştirme hata mesajı
 function showPasswordError(message) {
     const errorDiv = document.getElementById('passwordError');
     errorDiv.textContent = message;
@@ -457,7 +399,6 @@ function showPasswordError(message) {
     }, 4000);
 }
 
-// Şifre değiştirme başarı mesajı
 function showPasswordSuccess(message) {
     const successDiv = document.getElementById('passwordSuccess');
     successDiv.textContent = message;
@@ -467,16 +408,14 @@ function showPasswordSuccess(message) {
         successDiv.classList.remove('show');
     }, 4000);
 }
-// Sayfa yuklendiginde
+
 window.addEventListener('DOMContentLoaded', function () {
     console.log('Sayfa yuklendi');
 
-    // Login kontrolü
     if (!checkLogin()) {
         return;
     }
 
-    // Tema yukle
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -488,9 +427,7 @@ window.addEventListener('DOMContentLoaded', function () {
         icon.className = 'fas fa-moon';
     }
 
-    // Supabase'den veri cek
     fetchDataFromSupabase();
-    // Gercek zamanli arama - En az 3 karakter
     document.getElementById('searchSeriNo').addEventListener('input', function () {
         if (this.value.length === 0 || this.value.length >= 3) {
             applyFilters();
@@ -509,21 +446,15 @@ window.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Tarih degisikliklerinde filtrele
     document.getElementById('startDate').addEventListener('change', applyFilters);
     document.getElementById('endDate').addEventListener('change', applyFilters);
 
-    // Limit butonlarini guncelle
     updateLimitButtons();
-
-    // Popup dışına tıklanınca kapat
     document.getElementById('platePopup').addEventListener('click', function (e) {
         if (e.target.id === 'platePopup') {
             closePopup();
         }
     });
-
-    // Şifre değiştirme popup dışına tıklanınca kapat
     document.getElementById('changePasswordPopup').addEventListener('click', function (e) {
         if (e.target.id === 'changePasswordPopup') {
             closeChangePasswordPopup();
@@ -531,7 +462,6 @@ window.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// Şifre değiştirme form submit
 document.addEventListener('DOMContentLoaded', function () {
     const changePasswordForm = document.getElementById('changePasswordForm');
 
@@ -544,7 +474,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const confirmPassword = document.getElementById('confirmPassword').value;
             const changePasswordBtn = document.getElementById('changePasswordBtn');
 
-            // Validasyon
             if (!currentPassword || !newPassword || !confirmPassword) {
                 showPasswordError('Lütfen tüm alanları doldurun!');
                 return;
@@ -560,14 +489,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Butonu devre dışı bırak
             changePasswordBtn.disabled = true;
             changePasswordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Değiştiriliyor...';
 
             try {
                 const loggedInUser = sessionStorage.getItem('loggedInUser');
-                // userId artık gerekli değil çünkü kullanıcı adına göre işlem yapacağız
-                // const userId = sessionStorage.getItem('userId');
 
                 if (!loggedInUser) {
                     throw new Error('Oturum bilgisi bulunamadı');
@@ -575,7 +501,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 console.log('Şifre değiştirme işlemi başlatıldı. Kullanıcı:', loggedInUser);
 
-                // Kullanıcıyı Supabase'den çek - Kullanıcı adına göre
                 const getUserResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?Kullanıcı=eq.' + loggedInUser, {
                     method: 'GET',
                     headers: {
@@ -597,9 +522,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 const user = users[0];
-                // id kolonu yokmuş, o yüzden Kullanıcı adını kullanacağız
 
-                // Mevcut şifre kontrolü
                 if (user.Pass !== currentPassword) {
                     showPasswordError('Mevcut şifre yanlış!');
                     changePasswordBtn.disabled = false;
@@ -607,8 +530,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                // Şifreyi güncelle - Kullanıcı adına göre güncelleme yapıyoruz
-                // EncodeURIComponent kullanarak özel karakter sorunlarını engelliyoruz
                 const updateResponse = await fetch(SUPABASE_URL + '/rest/v1/m_users?Kullanıcı=eq.' + encodeURIComponent(user.Kullanıcı), {
                     method: 'PATCH',
                     headers: {
@@ -630,12 +551,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 console.log('Şifre başarıyla değiştirildi');
 
-                // Başarı mesajı
                 showPasswordSuccess('Şifre başarıyla değiştirildi!');
                 changePasswordBtn.innerHTML = '<i class="fas fa-check-circle"></i> Değiştirildi!';
                 changePasswordBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
 
-                // Formu temizle ve popup'ı kapat
                 setTimeout(function () {
                     closeChangePasswordPopup();
                     changePasswordBtn.disabled = false;
@@ -653,7 +572,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Çıkış Yapma Fonksiyonu
 function logout() {
     if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
         sessionStorage.removeItem('loggedInUser');
