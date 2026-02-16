@@ -1,6 +1,3 @@
-// Supabase Configuration
-// Supabase Configuration
-// Config.js dosyasindan alinir
 
 let busData = [];
 let filteredData = [];
@@ -680,19 +677,19 @@ function refreshData() {
 }
 
 // Scroll to Top Fonksiyonu
-const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+document.addEventListener('DOMContentLoaded', function () {
+    const scrollToTopBtn = document.getElementById("scrollToTopBtn");
 
-window.onscroll = function () {
-    scrollFunction();
-};
-
-function scrollFunction() {
-    if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-        scrollToTopBtn.classList.add("show");
-    } else {
-        scrollToTopBtn.classList.remove("show");
+    if (scrollToTopBtn) {
+        window.addEventListener('scroll', function () {
+            if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                scrollToTopBtn.classList.add("show");
+            } else {
+                scrollToTopBtn.classList.remove("show");
+            }
+        });
     }
-}
+});
 
 // Smooth scroll with easing
 function scrollToTop() {
